@@ -465,7 +465,9 @@ CameraFollowingSystem = (function(_super) {
     mapHeight = mapLayerComponent.tileHeight * mapLayerComponent.tileData.height;
     targetX = followeePosition.x - (Game.SCREEN_WIDTH / 2 - Game.GRID_SIZE);
     targetY = followeePosition.y - (Game.SCREEN_HEIGHT / 2 - Game.GRID_SIZE / 2);
-    cameraPosition.x = cameraPosition.x = cameraPosition.x.clamp(0, mapWidth - Game.SCREEN_WIDTH);
+    cameraPosition.x += (targetX - cameraPosition.x) * 0.1;
+    cameraPosition.y += (targetY - cameraPosition.y) * 0.1;
+    cameraPosition.x = cameraPosition.x.clamp(0, mapWidth - Game.SCREEN_WIDTH);
     return cameraPosition.y = cameraPosition.y.clamp(0, mapHeight - Game.SCREEN_HEIGHT);
   };
 

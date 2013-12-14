@@ -207,7 +207,8 @@ class CameraFollowingSystem extends System
         targetX = followeePosition.x - (Game.SCREEN_WIDTH / 2 - Game.GRID_SIZE)
         targetY = followeePosition.y - (Game.SCREEN_HEIGHT / 2 - Game.GRID_SIZE/2)
 
-        cameraPosition.x = 
+        cameraPosition.x += (targetX - cameraPosition.x) * 0.1
+        cameraPosition.y += (targetY - cameraPosition.y) * 0.1
 
 
 
