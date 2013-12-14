@@ -55,7 +55,7 @@ OverworldState = (function(_super) {
   }
 
   OverworldState.prototype.create = function() {
-    var acorn, background, backgroundLayer, camera, col, collision, collisionLayer, idx, mapData, objects, objectsLayer, player, row, tile, _i, _len, _ref1;
+    var camera, col, player, row, scoreEntity;
     col = 5;
     row = 5;
     player = this.entityManager.createEntityWithComponents([
@@ -124,28 +124,28 @@ OverworldState = (function(_super) {
           name: 'walk-right',
           row: 0,
           indices: [0, 0, 0, 1, 2, 2, 2, 1],
-          frameLength: 50
+          frameLength: 100
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-left',
           row: 1,
           indices: [0, 0, 0, 1, 2, 2, 2, 1],
-          frameLength: 50
+          frameLength: 100
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-down',
           row: 2,
           indices: [0, 0, 0, 1, 2, 2, 2, 1],
-          frameLength: 50
+          frameLength: 100
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-up',
           row: 3,
           indices: [0, 0, 0, 1, 2, 2, 2, 1],
-          frameLength: 50
+          frameLength: 100
         }
       ]
     ]);
@@ -157,10 +157,52 @@ OverworldState = (function(_super) {
         }
       ]
     ]);
-    mapData = this.assetManager.assets['sad-forest.json'];
+    scoreEntity = this.entityManager.createEntityWithComponents([
+      [
+        'ScoreComponent', {
+          score: 0
+        }
+      ], [
+        'AcornsLeftComponent', {
+          amount: 0
+        }
+      ]
+    ]);
+    this.loadLevel('level1.json');
+    this.gridMovementSystem = new GridMovementSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.tweenSystem = new TweenSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.shapeRenderSystem = new ShapeRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.inputSystem = new InputSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.cameraFollowingSystem = new CameraFollowingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.randomInputSystem = new RandomInputSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.tilemapRenderingSystem = new TilemapRenderingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.animationDirectionSyncSystem = new AnimationDirectionSyncSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.animatedSpriteSystem = new AnimatedSpriteSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.staticSpriteRenderSystem = new StaticSpriteRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.eyeFollowingSystem = new EyeFollowingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    return this.acornSystem = new AcornSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+  };
+
+  OverworldState.prototype.loadLevel = function(tileDataUrl) {
+    var acorn, acornsLeft, background, backgroundLayer, col, collisionEntity, collisionLayer, entity, idx, layerEntity, mapData, objects, objectsLayer, oldLayers, player, playerGridPosition, playerPixelPosition, row, tile, _, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _results;
+    oldLayers = [];
+    _ref1 = this.entityManager.iterateEntitiesAndComponents(['TilemapVisibleLayerComponent']);
+    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+      _ref2 = _ref1[_i], layerEntity = _ref2[0], _ = _ref2[1];
+      oldLayers.push(layerEntity);
+    }
+    _ref3 = this.entityManager.iterateEntitiesAndComponents(['TilemapCollisionLayerComponent']);
+    for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
+      _ref4 = _ref3[_j], collisionEntity = _ref4[0], _ = _ref4[1];
+      oldLayers.push(collisionEntity);
+    }
+    for (_k = 0, _len2 = oldLayers.length; _k < _len2; _k++) {
+      entity = oldLayers[_k];
+      this.entityManager.removeEntity(entity);
+    }
+    mapData = this.assetManager.assets[tileDataUrl];
     background = mapData.layers[0];
     objects = mapData.layers[1];
-    collision = mapData.layers[2];
     backgroundLayer = this.entityManager.createEntityWithComponents([
       [
         'TilemapVisibleLayerComponent', {
@@ -190,14 +232,22 @@ OverworldState = (function(_super) {
         }
       ]
     ]);
-    _ref1 = objects.data;
-    for (idx = _i = 0, _len = _ref1.length; _i < _len; idx = ++_i) {
-      tile = _ref1[idx];
+    _ref5 = this.entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent', 'GridPositionComponent']), player = _ref5[0], _ = _ref5[1], playerPixelPosition = _ref5[2], playerGridPosition = _ref5[3];
+    playerGridPosition.col = 9;
+    playerGridPosition.row = 11;
+    playerPixelPosition.col = 9 * Game.GRID_SIZE;
+    playerPixelPosition.row = 11 * Game.GRID_SIZE;
+    _ref6 = this.entityManager.getFirstEntityAndComponents(['AcornsLeftComponent']), _ = _ref6[0], acornsLeft = _ref6[1];
+    acornsLeft.amount = 0;
+    _ref7 = objects.data;
+    _results = [];
+    for (idx = _l = 0, _len3 = _ref7.length; _l < _len3; idx = ++_l) {
+      tile = _ref7[idx];
       if (tile === 0) {
         col = idx % objects.width;
         row = Math.floor(idx / objects.width);
         acorn = this.entityManager.createEntityWithComponents([
-          [
+          ['AcornComponent', {}], [
             'PixelPositionComponent', {
               x: col * Game.GRID_SIZE,
               y: row * Game.GRID_SIZE
@@ -208,7 +258,7 @@ OverworldState = (function(_super) {
               row: row,
               gridSize: Game.GRID_SIZE
             }
-          ], ['PickUpAbleComponent', {}], [
+          ], [
             'StaticSpriteComponent', {
               spriteUrl: 'acorn.png'
             }
@@ -220,25 +270,19 @@ OverworldState = (function(_super) {
             }
           ]
         ]);
+        _results.push(acornsLeft.amount++);
+      } else {
+        _results.push(void 0);
       }
     }
-    this.gridMovementSystem = new GridMovementSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.tweenSystem = new TweenSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.shapeRenderSystem = new ShapeRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.inputSystem = new InputSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.cameraFollowingSystem = new CameraFollowingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.randomInputSystem = new RandomInputSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.tilemapRenderingSystem = new TilemapRenderingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.animationDirectionSyncSystem = new AnimationDirectionSyncSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.animatedSpriteSystem = new AnimatedSpriteSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    this.staticSpriteRenderSystem = new StaticSpriteRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    return this.eyeFollowingSystem = new EyeFollowingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    return _results;
   };
 
   OverworldState.prototype.step = function(delta, time) {
     this.gridMovementSystem.update(delta, time);
     this.tweenSystem.update(delta, time);
     this.randomInputSystem.update(delta, time);
+    this.acornSystem.update(delta, time);
     this.animatedSpriteSystem.update(delta, time);
     this.animationDirectionSyncSystem.update(delta, time);
     return this.cameraFollowingSystem.update(delta, time);
@@ -268,7 +312,7 @@ OverworldState = (function(_super) {
 Game = (function() {
   Game.SCREEN_WIDTH = 640;
 
-  Game.SCREEN_HEIGHT = 576;
+  Game.SCREEN_HEIGHT = 640;
 
   Game.GRID_SIZE = 64;
 
@@ -282,6 +326,9 @@ Game = (function() {
     this.assetManager.loadImage('acorn.png');
     this.assetManager.loadImage('acorn-eyes.png');
     this.assetManager.loadTilemap('sad-forest.json');
+    this.assetManager.loadTilemap('level1.json');
+    this.assetManager.loadTilemap('level2.json');
+    this.assetManager.loadTilemap('level3.json');
     this.assetManager.start(function() {
       _this.states.push(new OverworldState(_this.cq, _this.assetManager));
       return _this.states[0].start();

@@ -42,7 +42,8 @@ window.components = {
   RandomArrowsInputComponent: {},
   KeyboardArrowsInputComponent: {},
   GridMovementComponent: {
-    speed: 0.2
+    speed: 0.2,
+    isMoving: false
   },
   CollidableComponent: {},
   PickUpAbleComponent: {},
@@ -109,5 +110,12 @@ window.components = {
     frameLength: 100,
     currentFrame: 0,
     frameElapsedTime: 0
+  },
+  AcornComponent: {},
+  ScoreComponent: {
+    score: 0
+  },
+  AcornsLeftComponent: {
+    amount: 0
   }
 };

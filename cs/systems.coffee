@@ -8,13 +8,12 @@ class GridMovementSystem extends System
             if not input.enabled then continue
 
             tweens = @entityManager.getComponents(entity, 'TweenComponent')
-            moving = no
+            movement.isMoving = no
             for tween in tweens
                 if tween.component == pixelPosition
-                    moving = yes
+                    movement.isMoving = yes
                     break
-            if not moving
-
+            if not movement.isMoving
                 newCol = Math.round(pixelPosition.x / gridPosition.gridSize)
                 newRow = Math.round(pixelPosition.y / gridPosition.gridSize)
                 if newCol != gridPosition.col or newRow != gridPosition.row
@@ -204,13 +203,11 @@ class CameraFollowingSystem extends System
         mapWidth = mapLayerComponent.tileWidth * mapLayerComponent.tileData.width
         mapHeight = mapLayerComponent.tileHeight * mapLayerComponent.tileData.height
 
-        targetX = followeePosition.x - (Game.SCREEN_WIDTH / 2 - Game.GRID_SIZE)
-        targetY = followeePosition.y - (Game.SCREEN_HEIGHT / 2 - Game.GRID_SIZE/2)
+        targetX = followeePosition.x - (Game.SCREEN_WIDTH / 2)
+        targetY = followeePosition.y - (Game.SCREEN_HEIGHT / 2)
 
         cameraPosition.x += (targetX - cameraPosition.x) * 0.1
         cameraPosition.y += (targetY - cameraPosition.y) * 0.1
-
-
 
         cameraPosition.x = cameraPosition.x.clamp(0, mapWidth - Game.SCREEN_WIDTH)
         cameraPosition.y = cameraPosition.y.clamp(0, mapHeight - Game.SCREEN_HEIGHT)
@@ -312,8 +309,13 @@ class DialogRenderingSystem extends System
 
 class AnimationDirectionSyncSystem extends System
     update: (delta) ->
-        for [animationEntity, animation, direction] in @entityManager.iterateEntitiesAndComponents(['AnimationComponent', 'DirectionComponent'])
-            animation.currentAction = 'walk-' + direction.direction
+        for [animationEntity, animation, direction, movement] in @entityManager.iterateEntitiesAndComponents(['AnimationComponent', 'DirectionComponent', 'GridMovementComponent'])
+            if movement.isMoving
+                animation.currentAction = 'walk-' + direction.direction
+            else
+                animation.currentAction = 'idle-' + direction.direction
+
+
 
 class AnimatedSpriteSystem extends System
     update: (delta) ->
@@ -390,4 +392,18 @@ class EyeFollowingSystem extends System
 
 
 
-        
+class AcornSystem extends System
+    update: (delta) ->
+        [player, _, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
+        [scoreEntity, score, acornsLeft] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent'])
+
+        for [acornEntity, acorn, acornPosition] in @entityManager.iterateEntitiesAndComponents(['AcornComponent', 'GridPositionComponent'])
+            if acornPosition.col == playerPosition.col and acornPosition.row == playerPosition.row
+                @entityManager.removeEntity(acornEntity)
+                score.score++
+                acornsLeft--
+                if acornsLeft == 0
+                    console.log 'WINNER'
+
+
+

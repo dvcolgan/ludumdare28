@@ -45,6 +45,7 @@ window.components =
 
     GridMovementComponent:
         speed: 0.2
+        isMoving: no
 
     CollidableComponent: {}
     PickUpAbleComponent: {}
@@ -119,3 +120,13 @@ window.components =
 
         currentFrame: 0
         frameElapsedTime: 0
+
+    AcornComponent: {}
+
+    ScoreComponent:
+        score: 0
+
+    AcornsLeftComponent:
+        amount: 0
+
+

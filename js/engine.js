@@ -134,6 +134,21 @@ EntityManager = (function() {
     return null;
   };
 
+  EntityManager.prototype.removeEntity = function(entity) {
+    var componentName, data, _ref, _results;
+    _ref = this.componentStores;
+    _results = [];
+    for (componentName in _ref) {
+      data = _ref[componentName];
+      if (entity in data) {
+        _results.push(delete data[entity]);
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
+  };
+
   EntityManager.prototype.createEntityWithComponents = function(components) {
     var args, componentName, entity, _i, _len, _ref;
     entity = this.createEntity();

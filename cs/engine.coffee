@@ -94,6 +94,11 @@ class EntityManager
             return component
         return null
 
+    removeEntity: (entity) ->
+        for componentName, data of @componentStores
+            if entity of data
+                delete data[entity]
+
     createEntityWithComponents: (components) ->
         entity = @createEntity()
         for [componentName, args] in components
