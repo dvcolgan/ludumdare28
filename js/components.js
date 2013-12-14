@@ -41,11 +41,12 @@ window.components = {
   },
   RandomArrowsInputComponent: {},
   KeyboardArrowsInputComponent: {},
-  PokemonMovementComponent: {
+  GridMovementComponent: {
     speed: 0.2
   },
   CollidableComponent: {},
-  IsPokemonMovingComponent: {
+  PickUpAbleComponent: {},
+  IsGridMovingComponent: {
     dx: 0,
     dy: 0,
     destCol: 0,
@@ -79,17 +80,27 @@ window.components = {
     visible: false,
     talkee: null
   },
+  EyeHavingComponent: {
+    offsetMax: 5,
+    targetEntity: null,
+    eyesImageUrl: ''
+  },
   DialogBoxTextComponent: {
     text: ''
   },
   NPCDialogSayingComponent: {
     text: ''
   },
+  StaticSpriteComponent: {
+    spriteUrl: ''
+  },
   AnimationComponent: {
     currentAction: 'walk-down',
     spritesheetUrl: '',
-    width: 32,
-    height: 32
+    frameWidth: 32,
+    frameHeight: 32,
+    offsetX: 0,
+    offsetY: 0
   },
   AnimationActionComponent: {
     name: 'walk-down',

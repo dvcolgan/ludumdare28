@@ -26,7 +26,7 @@ AssetManager = (function() {
   };
 
   AssetManager.prototype.start = function(callback) {
-    var audio, audioUrl, img, imgUrl, tilemapUrl, _fn, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _results,
+    var audio, audioUrl, img, imgUrl, tilemapUrl, _fn, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2,
       _this = this;
     _ref = this.tilemapsToLoad;
     _fn = function(tilemapUrl) {
@@ -66,7 +66,6 @@ AssetManager = (function() {
       this.assets[imgUrl] = img;
     }
     _ref2 = this.audiosToLoad;
-    _results = [];
     for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
       audioUrl = _ref2[_k];
       audio = new Audio();
@@ -79,9 +78,11 @@ AssetManager = (function() {
       }), false);
       audio.src = this.audiosPrefix + audioUrl;
       this.remaining++;
-      _results.push(this.assets[audioUrl] = audio);
+      this.assets[audioUrl] = audio;
     }
-    return _results;
+    if (Object.keys(this.assets).length === 0) {
+      return callback();
+    }
   };
 
   return AssetManager;

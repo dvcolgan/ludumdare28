@@ -2,9 +2,9 @@ class System
     constructor: (@cq, @entityManager, @eventManager, @assetManager) ->
 
 
-class PokemonMovementSystem extends System
+class GridMovementSystem extends System
     update: (delta) ->
-        for [entity, movement, direction, input, gridPosition, pixelPosition] in @entityManager.iterateEntitiesAndComponents(['PokemonMovementComponent', 'DirectionComponent', 'ActionInputComponent', 'GridPositionComponent', 'PixelPositionComponent'])
+        for [entity, movement, direction, input, gridPosition, pixelPosition] in @entityManager.iterateEntitiesAndComponents(['GridMovementComponent', 'DirectionComponent', 'ActionInputComponent', 'GridPositionComponent', 'PixelPositionComponent'])
             if not input.enabled then continue
 
             tweens = @entityManager.getComponents(entity, 'TweenComponent')
@@ -101,9 +101,9 @@ class TweenSystem extends System
 
 
 
-class CanvasRenderSystem extends System
+class ShapeRenderSystem extends System
 
-    draw: (delta) ->
+    draw: ->
         [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         for [entity, position, color, shape, direction] in @entityManager.iterateEntitiesAndComponents(['PixelPositionComponent', 'ColorComponent', 'ShapeRendererComponent', 'DirectionComponent'])
@@ -199,15 +199,20 @@ class CameraFollowingSystem extends System
         [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
         [followee, _, followeePosition] = @entityManager.getFirstEntityAndComponents(['CameraFollowsComponent', 'PixelPositionComponent'])
 
-        #[mapLayer, mapLayerComponent] = @entityManager.getFirstEntityAndComponents(['TilemapVisibleLayerComponent'])
+        [mapLayer, mapLayerComponent] = @entityManager.getFirstEntityAndComponents(['TilemapVisibleLayerComponent'])
 
-        #mapWidth = mapLayerComponent.tileWidth * mapLayerComponent.tileData.width
-        #mapHeight = mapLayerComponent.tileHeight * mapLayerComponent.tileData.height
+        mapWidth = mapLayerComponent.tileWidth * mapLayerComponent.tileData.width
+        mapHeight = mapLayerComponent.tileHeight * mapLayerComponent.tileData.height
 
-        cameraPosition.x = followeePosition.x - (Game.SCREEN_WIDTH / 2 - 32)
-        cameraPosition.y = followeePosition.y - (Game.SCREEN_HEIGHT / 2 - 16)
-        #cameraPosition.x = cameraPosition.x.clamp(0, mapWidth - Game.SCREEN_WIDTH)
-        #cameraPosition.y = cameraPosition.y.clamp(0, mapHeight - Game.SCREEN_HEIGHT)
+        targetX = followeePosition.x - (Game.SCREEN_WIDTH / 2 - Game.GRID_SIZE)
+        targetY = followeePosition.y - (Game.SCREEN_HEIGHT / 2 - Game.GRID_SIZE/2)
+
+        cameraPosition.x = 
+
+
+
+        cameraPosition.x = cameraPosition.x.clamp(0, mapWidth - Game.SCREEN_WIDTH)
+        cameraPosition.y = cameraPosition.y.clamp(0, mapHeight - Game.SCREEN_HEIGHT)
 
 
 class TilemapRenderingSystem extends System
@@ -323,7 +328,7 @@ class AnimatedSpriteSystem extends System
                             action.currentFrame = 0
                     break
 
-    draw: (delta) ->
+    draw: ->
         [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         for [animationEntity, animation, animationPosition] in @entityManager.iterateEntitiesAndComponents(['AnimationComponent', 'PixelPositionComponent'])
@@ -332,17 +337,56 @@ class AnimatedSpriteSystem extends System
             for action in actions
                 if action.name == animation.currentAction
 
-                    imageX = action.indices[action.currentFrame] * animation.width
-                    imageY = action.row * animation.height
+                    imageX = action.indices[action.currentFrame] * animation.frameWidth
+                    imageY = action.row * animation.frameHeight
 
                     screenX = Math.floor(animationPosition.x - cameraPosition.x)
                     screenY = Math.floor(animationPosition.y - cameraPosition.y)
                     @cq.drawImage(
                         @assetManager.assets[animation.spritesheetUrl],
                         imageX, imageY,
-                        animation.width, animation.height,
-                        screenX, screenY,
-                        animation.width, animation.height
+                        animation.frameWidth, animation.frameHeight,
+                        screenX - animation.offsetX, screenY - animation.offsetY,
+                        animation.frameWidth, animation.frameHeight,
                     )
                     break
 
+class StaticSpriteRenderSystem extends System
+    draw: ->
+        [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+
+        for [spriteEntity, sprite, position] in @entityManager.iterateEntitiesAndComponents(['StaticSpriteComponent', 'PixelPositionComponent'])
+            screenX = Math.floor(position.x - cameraPosition.x)
+            screenY = Math.floor(position.y - cameraPosition.y)
+            @cq.drawImage(@assetManager.assets[sprite.spriteUrl], screenX, screenY)
+
+
+class EyeFollowingSystem extends System
+    draw: ->
+        [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        for [eyeEntity, eyes, eyeHaverPosition] in @entityManager.iterateEntitiesAndComponents(['EyeHavingComponent', 'PixelPositionComponent'])
+            #TODO cull the acorns offscreen
+            targetPosition = @entityManager.getComponent(eyes.targetEntity, 'PixelPositionComponent')
+            dx = targetPosition.x - eyeHaverPosition.x
+            dy = targetPosition.y - eyeHaverPosition.y
+
+            dist = Math.sqrt(dx*dx + dy*dy)
+
+            if dist == 0
+                offsetX = 0
+                offsetY = 0
+            else
+                unitX = dx / dist
+                unitY = dy / dist
+
+                offsetX = unitX * eyes.offsetMax
+                offsetY = unitY * eyes.offsetMax
+
+            drawX = (eyeHaverPosition.x + offsetX) - cameraPosition.x
+            drawY = (eyeHaverPosition.y + offsetY) - cameraPosition.y
+
+            @cq.drawImage(@assetManager.assets['acorn-eyes.png'], drawX, drawY)
+
+
+
+        

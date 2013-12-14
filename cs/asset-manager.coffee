@@ -57,4 +57,6 @@ class AssetManager
             @remaining++
             @assets[audioUrl] = audio
 
+        if Object.keys(@assets).length == 0 then callback()
+
 
