@@ -134,9 +134,6 @@ window.components =
     ScoreComponent:
         score: 0
 
-    AcornsLeftComponent:
-        amount: 0
-
     AstarInputComponent: {}
 
     LivesComponent:

@@ -54,10 +54,10 @@ class PlayState extends GameState
             ['AnimationActionComponent', {name: 'idle-left',  row: 1, indices: [0], frameLength: 100 }]
             ['AnimationActionComponent', {name: 'idle-down',  row: 2, indices: [0], frameLength: 100 }]
             ['AnimationActionComponent', {name: 'idle-up',    row: 3, indices: [0], frameLength: 100 }]
-            ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [0,1,2,1], frameLength: 50 }]
-            ['AnimationActionComponent', {name: 'walk-left',  row: 1, indices: [0,1,2,1], frameLength: 50 }]
-            ['AnimationActionComponent', {name: 'walk-down',  row: 2, indices: [0,1,2,1], frameLength: 50 }]
-            ['AnimationActionComponent', {name: 'walk-up',    row: 3, indices: [0,1,2,1], frameLength: 50 }]
+            ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [0,1,2], frameLength: 50 }]
+            ['AnimationActionComponent', {name: 'walk-left',  row: 1, indices: [0,1,2], frameLength: 50 }]
+            ['AnimationActionComponent', {name: 'walk-down',  row: 2, indices: [0,1,2], frameLength: 50 }]
+            ['AnimationActionComponent', {name: 'walk-up',    row: 3, indices: [0,1,2], frameLength: 50 }]
             ['CameraFollowsComponent', {}]
         ])
 
@@ -68,7 +68,6 @@ class PlayState extends GameState
 
         scoreEntity = @entityManager.createEntityWithComponents([
             ['ScoreComponent', { score: 0 }]
-            ['AcornsLeftComponent', { amount: 0 }]
             ['LivesComponent', { lives: 3 }]
             ['CurrentLevelComponent', { level: 0 }]
         ])
@@ -173,6 +172,7 @@ class Game
         @assetManager.loadImage('game-over-screen.png')
         @assetManager.loadTilemap('level1.json')
         @assetManager.loadTilemap('level2.json')
+        @assetManager.loadTilemap('level3.json')
         @assetManager.loadTilemap('level3.json')
         @assetManager.loadTilemap('testlevel.json')
 

@@ -154,28 +154,28 @@ PlayState = (function(_super) {
         'AnimationActionComponent', {
           name: 'walk-right',
           row: 0,
-          indices: [0, 1, 2, 1],
+          indices: [0, 1, 2],
           frameLength: 50
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-left',
           row: 1,
-          indices: [0, 1, 2, 1],
+          indices: [0, 1, 2],
           frameLength: 50
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-down',
           row: 2,
-          indices: [0, 1, 2, 1],
+          indices: [0, 1, 2],
           frameLength: 50
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-up',
           row: 3,
-          indices: [0, 1, 2, 1],
+          indices: [0, 1, 2],
           frameLength: 50
         }
       ], ['CameraFollowsComponent', {}]
@@ -192,10 +192,6 @@ PlayState = (function(_super) {
       [
         'ScoreComponent', {
           score: 0
-        }
-      ], [
-        'AcornsLeftComponent', {
-          amount: 0
         }
       ], [
         'LivesComponent', {
@@ -340,6 +336,7 @@ Game = (function() {
     this.assetManager.loadImage('game-over-screen.png');
     this.assetManager.loadTilemap('level1.json');
     this.assetManager.loadTilemap('level2.json');
+    this.assetManager.loadTilemap('level3.json');
     this.assetManager.loadTilemap('level3.json');
     this.assetManager.loadTilemap('testlevel.json');
     this.assetManager.start(function() {

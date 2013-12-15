@@ -25,34 +25,64 @@ you can use one of several powerups once per level
 
 todo:
     activate powerup
-    -have fires burn acorns
-    -have fires kill player
-    -have fires spread and burn out with very low chance
+    if you hold a key while dying you don't go back to the middle
+    make fewer acorns
 
-    level changing
+    add sound effects
+    add bgm
 
-    make dog enemy that chases you and avoid fires
 
-    -pathfinding use astar.js
 
-    human laying fire
-    make the ground grass instead of doritos
+    dogs spread random fire
+    different ai for the other dog
 
-    -game over screen where it shows the total number of acorns you got
-
-    start with 3 lives and get another one after 1000 acorns
 
     fix the controls so that it prefers the opposite of the previous direction
 
-    acorns are happy when you are near and sad when enemies are near
 
+    make the player invincible for a few seconds on spawn
+    make trees and stumps sad when they catch on fire and make them look charcoaled
+
+    disallow fires from going outside the map
+
+    juice for getting more acorns
+
+    add transitions
+
+    fix firefox
+
+    -add wasd
+
+    -level changing
+
+    -have fires burn acorns
+    -have fires kill playern
+    -have fires spread and burn out with very low chance
+
+
+    -make dog enemy that chases you
+
+    -pathfinding use astar.js
+
+    -human laying fire
+    -make the ground grass instead of doritos
+
+    -game over screen where it shows the total number of acorns you got
+
+    -start with 3 lives and get another one after 1000 acorns
+
+
+    -acorns are happy when you are near and sad when enemies are near
+
+    -acorns look at the entity closest to them, not just the player
+
+
+
+
+
+later:
     acorns blinking at random
-    acorns look at the entity closest to them, not just the player
-
-    if you hold a key while dying you don't go back to the middle
-
-    make the acorns animate when they catch fire (same with the trees)
-
     gust of wind with leaves showing where fire will spread
-
     add lightning strikes for adding fire
+    make the acorns animate when they catch fire (same with the trees)
+    make dogs avoid fires

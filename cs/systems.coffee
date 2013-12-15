@@ -136,30 +136,30 @@ class InputSystem extends System
         for [entity, __, input] in @entityManager.iterateEntitiesAndComponents(['KeyboardArrowsInputComponent', 'ActionInputComponent'])
             if input.enabled or value == off
                 if value == off
-                    if key == 'left'  then input.left = off
-                    if key == 'right' then input.right = off
-                    if key == 'up'    then input.up = off
-                    if key == 'down'  then input.down = off
-                    if key == 'z' or key == 'semicolon' then input.action = off
-                    if key == 'x' or key == 'q'     then input.cancel = off
+                    if key == 'left' or key == 'a' then input.left = off
+                    if key == 'right' or key == 'd' or key == 'e' then input.right = off
+                    if key == 'up' or key == 'w' or key == 'comma' then input.up = off
+                    if key == 'down' or key == 's' or key == 'o'  then input.down = off
+                    #if key == 'z' or key == 'semicolon' then input.action = off
+                    #if key == 'x' or key == 'q'     then input.cancel = off
                 else
                     # TODO MAKE A COFFEESCRIPT PRECOMPILER
                     #{% for dir in ['left', 'right', 'up', 'down'] %}
                     #    if key == '{{ dir }}' then if input.{{ dir }} == 'hit' then input.{{ dir }} = 'held' else input.{{ dir }} = 'hit'
 
-                    if key == 'left'
+                    if key == 'left' or key == 'a'
                         if input.left  == 'hit' then input.left  = 'held' else input.left  = 'hit'
-                    if key == 'right'
+                    if key == 'right' or key == 'd' or key == 'e'
                         if input.right == 'hit' then input.right = 'held' else input.right = 'hit'
-                    if key == 'up'
+                    if key == 'up' or key == 'w' or key == 'comma'
                         if input.up    == 'hit' then input.up    = 'held' else input.up    = 'hit'
-                    if key == 'down'
+                    if key == 'down' or key == 's' or key == 'o'
                         if input.down  == 'hit' then input.down  = 'held' else input.down  = 'hit'
 
-                    if key == 'z' or key == 'semicolon'
-                        if input.action == 'hit' then input.action = 'held' else input.action = 'hit'
-                    if key == 'x' or key == 'q'
-                        if input.cancel == 'hit' then input.cancel = 'held' else input.cancel = 'hit'
+                    #if key == 'z' or key == 'semicolon'
+                    #    if input.action == 'hit' then input.action = 'held' else input.action = 'hit'
+                    #if key == 'x' or key == 'q'
+                    #    if input.cancel == 'hit' then input.cancel = 'held' else input.cancel = 'hit'
 
 # TODO make this generic for any key using a nice hash table
 class RandomInputSystem extends System
@@ -457,7 +457,7 @@ class EyeFollowingSystem extends System
 class AcornSystem extends System
     update: (delta) ->
         [player, __, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
-        [scoreEntity, score, acornsLeft, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent', 'LivesComponent'])
+        [scoreEntity, score, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent'])
         [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         if (player == null) or (scoreEntity == null) or (camera == null)
@@ -482,9 +482,6 @@ class AcornSystem extends System
                     if score.score == 1000
                         lives.lives++
 
-
-                    acornsLeft.amount--
-                
                 closest = player
                 closestDist = util.dist(
                     acornPosition.col, acornPosition.row,
@@ -502,14 +499,15 @@ class AcornSystem extends System
                         sprite.currentFrame = 1
                 eyes.targetEntity = closest
 
-        if acornsLeft.amount == 0
+        acorns = @entityManager.iterateEntitiesAndComponents(['AcornComponent'])
+        if acorns.length == 0
             @eventManager.trigger('next-level', player)
 
 
 
 class ScoreRenderingSystem extends System
     draw: ->
-        [scoreEntity, score, acornsLeft, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent', 'LivesComponent'])
+        [scoreEntity, score, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent'])
 
         @cq.fillStyle('rgba(0,0,0,0.8)')
         @cq.roundRect(-30, -30, 156, 70, 25)
@@ -566,7 +564,6 @@ class FireSpreadingSystem extends System
                     for [acornEntity, acorn, acornPosition] in @entityManager.iterateEntitiesAndComponents(['AcornComponent', 'GridPositionComponent'])
                         if acornPosition.col == firePosition.col and acornPosition.row == firePosition.row
                             @entityManager.removeEntity(acornEntity)
-                            break
 
                     direction = _.sample(['left','right','up','down'])
                     if direction == 'left'
@@ -652,8 +649,6 @@ class LevelLoaderSystem extends System
         playerPixelPosition.y = 11 * Game.GRID_SIZE
 
         # Set up acorns
-        [__, acornsLeft] = @entityManager.getFirstEntityAndComponents(['AcornsLeftComponent'])
-        acornsLeft.amount = 0
         for tile, idx in objects.data
             if tile == 0
                 col = (idx % objects.width)
@@ -665,7 +660,7 @@ class LevelLoaderSystem extends System
                     ['MultiStateSpriteComponent', { spriteUrl: 'acorn.png', frameWidth: 64, frameHeight: 64 }]
                     ['EyeHavingComponent', { offsetMax: 4, targetEntity: player, eyesImageUrl: 'acorn-eyes.png' }]
                 ])
-                acornsLeft.amount++
+                break
 
         #for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
         for [col, row] in [[3,16], [16,3]]
@@ -697,9 +692,9 @@ class LevelLoaderSystem extends System
                 ['AnimationActionComponent', {name: 'idle-left',  row: 1, indices: [0], frameLength: 100 }]
                 ['AnimationActionComponent', {name: 'idle-down',  row: 2, indices: [0], frameLength: 100 }]
                 ['AnimationActionComponent', {name: 'idle-up',    row: 3, indices: [0], frameLength: 100 }]
-                ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [0,1,2,1], frameLength: 100 }]
-                ['AnimationActionComponent', {name: 'walk-left',  row: 1, indices: [0,1,2,1], frameLength: 100 }]
-                ['AnimationActionComponent', {name: 'walk-down',  row: 2, indices: [0,1,2,1], frameLength: 100 }]
-                ['AnimationActionComponent', {name: 'walk-up',    row: 3, indices: [0,1,2,1], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [0,1,2], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'walk-left',  row: 1, indices: [0,1,2], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'walk-down',  row: 2, indices: [0,1,2], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'walk-up',    row: 3, indices: [0,1,2], frameLength: 100 }]
             ])
 

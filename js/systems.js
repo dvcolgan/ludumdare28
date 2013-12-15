@@ -261,67 +261,47 @@ InputSystem = (function(_super) {
       _ref5 = _ref4[_i], entity = _ref5[0], __ = _ref5[1], input = _ref5[2];
       if (input.enabled || value === false) {
         if (value === false) {
-          if (key === 'left') {
+          if (key === 'left' || key === 'a') {
             input.left = false;
           }
-          if (key === 'right') {
+          if (key === 'right' || key === 'd' || key === 'e') {
             input.right = false;
           }
-          if (key === 'up') {
+          if (key === 'up' || key === 'w' || key === 'comma') {
             input.up = false;
           }
-          if (key === 'down') {
-            input.down = false;
-          }
-          if (key === 'z' || key === 'semicolon') {
-            input.action = false;
-          }
-          if (key === 'x' || key === 'q') {
-            _results.push(input.cancel = false);
+          if (key === 'down' || key === 's' || key === 'o') {
+            _results.push(input.down = false);
           } else {
             _results.push(void 0);
           }
         } else {
-          if (key === 'left') {
+          if (key === 'left' || key === 'a') {
             if (input.left === 'hit') {
               input.left = 'held';
             } else {
               input.left = 'hit';
             }
           }
-          if (key === 'right') {
+          if (key === 'right' || key === 'd' || key === 'e') {
             if (input.right === 'hit') {
               input.right = 'held';
             } else {
               input.right = 'hit';
             }
           }
-          if (key === 'up') {
+          if (key === 'up' || key === 'w' || key === 'comma') {
             if (input.up === 'hit') {
               input.up = 'held';
             } else {
               input.up = 'hit';
             }
           }
-          if (key === 'down') {
+          if (key === 'down' || key === 's' || key === 'o') {
             if (input.down === 'hit') {
-              input.down = 'held';
+              _results.push(input.down = 'held');
             } else {
-              input.down = 'hit';
-            }
-          }
-          if (key === 'z' || key === 'semicolon') {
-            if (input.action === 'hit') {
-              input.action = 'held';
-            } else {
-              input.action = 'hit';
-            }
-          }
-          if (key === 'x' || key === 'q') {
-            if (input.cancel === 'hit') {
-              _results.push(input.cancel = 'held');
-            } else {
-              _results.push(input.cancel = 'hit');
+              _results.push(input.down = 'hit');
             }
           } else {
             _results.push(void 0);
@@ -898,9 +878,9 @@ AcornSystem = (function(_super) {
   }
 
   AcornSystem.prototype.update = function(delta) {
-    var acorn, acornEntity, acornPosition, acornsLeft, camera, cameraPosition, closest, closestDist, dist, enemies, enemy, enemyEntity, enemyPosition, eyes, lives, maxScreenCol, maxScreenRow, minScreenCol, minScreenRow, player, playerPosition, score, scoreEntity, sprite, __, _i, _j, _len, _len1, _ref16, _ref17, _ref18, _ref19, _ref20, _ref21;
+    var acorn, acornEntity, acornPosition, acorns, camera, cameraPosition, closest, closestDist, dist, enemies, enemy, enemyEntity, enemyPosition, eyes, lives, maxScreenCol, maxScreenRow, minScreenCol, minScreenRow, player, playerPosition, score, scoreEntity, sprite, __, _i, _j, _len, _len1, _ref16, _ref17, _ref18, _ref19, _ref20, _ref21;
     _ref16 = this.entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent']), player = _ref16[0], __ = _ref16[1], playerPosition = _ref16[2];
-    _ref17 = this.entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent', 'LivesComponent']), scoreEntity = _ref17[0], score = _ref17[1], acornsLeft = _ref17[2], lives = _ref17[3];
+    _ref17 = this.entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent']), scoreEntity = _ref17[0], score = _ref17[1], lives = _ref17[2];
     _ref18 = this.entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent']), camera = _ref18[0], __ = _ref18[1], cameraPosition = _ref18[2];
     if ((player === null) || (scoreEntity === null) || (camera === null)) {
       return;
@@ -920,7 +900,6 @@ AcornSystem = (function(_super) {
           if (score.score === 1000) {
             lives.lives++;
           }
-          acornsLeft.amount--;
         }
         closest = player;
         closestDist = util.dist(acornPosition.col, acornPosition.row, playerPosition.col, playerPosition.row);
@@ -937,7 +916,8 @@ AcornSystem = (function(_super) {
         eyes.targetEntity = closest;
       }
     }
-    if (acornsLeft.amount === 0) {
+    acorns = this.entityManager.iterateEntitiesAndComponents(['AcornComponent']);
+    if (acorns.length === 0) {
       return this.eventManager.trigger('next-level', player);
     }
   };
@@ -955,8 +935,8 @@ ScoreRenderingSystem = (function(_super) {
   }
 
   ScoreRenderingSystem.prototype.draw = function() {
-    var acornsLeft, acornsWidth, lives, score, scoreEntity, _ref17;
-    _ref17 = this.entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent', 'LivesComponent']), scoreEntity = _ref17[0], score = _ref17[1], acornsLeft = _ref17[2], lives = _ref17[3];
+    var acornsWidth, lives, score, scoreEntity, _ref17;
+    _ref17 = this.entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent']), scoreEntity = _ref17[0], score = _ref17[1], lives = _ref17[2];
     this.cq.fillStyle('rgba(0,0,0,0.8)');
     this.cq.roundRect(-30, -30, 156, 70, 25);
     this.cq.fill();
@@ -1040,7 +1020,6 @@ FireSpreadingSystem = (function(_super) {
             _ref22 = _ref21[_j], acornEntity = _ref22[0], acorn = _ref22[1], acornPosition = _ref22[2];
             if (acornPosition.col === firePosition.col && acornPosition.row === firePosition.row) {
               this.entityManager.removeEntity(acornEntity);
-              break;
             }
           }
           direction = _.sample(['left', 'right', 'up', 'down']);
@@ -1150,7 +1129,7 @@ LevelLoaderSystem = (function(_super) {
   }
 
   LevelLoaderSystem.prototype.loadLevel = function(tileDataUrl, speedFactor) {
-    var acorn, acornsLeft, background, backgroundLayer, col, collisionEntity, collisionLayer, dog, enemyEntity, entity, fireEnemy, i, idx, layerEntity, mapData, objects, objectsLayer, oldEntities, player, playerGridPosition, playerPixelPosition, row, tile, __, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _o, _ref19, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref30, _ref31, _results;
+    var acorn, background, backgroundLayer, col, collisionEntity, collisionLayer, dog, enemyEntity, entity, fireEnemy, i, idx, layerEntity, mapData, objects, objectsLayer, oldEntities, player, playerGridPosition, playerPixelPosition, row, tile, __, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _o, _ref19, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref30, _results;
     oldEntities = [];
     _ref19 = this.entityManager.iterateEntitiesAndComponents(['EnemyComponent']);
     for (_i = 0, _len = _ref19.length; _i < _len; _i++) {
@@ -1208,11 +1187,9 @@ LevelLoaderSystem = (function(_super) {
     playerGridPosition.row = 11;
     playerPixelPosition.x = 9 * Game.GRID_SIZE;
     playerPixelPosition.y = 11 * Game.GRID_SIZE;
-    _ref26 = this.entityManager.getFirstEntityAndComponents(['AcornsLeftComponent']), __ = _ref26[0], acornsLeft = _ref26[1];
-    acornsLeft.amount = 0;
-    _ref27 = objects.data;
-    for (idx = _m = 0, _len4 = _ref27.length; _m < _len4; idx = ++_m) {
-      tile = _ref27[idx];
+    _ref26 = objects.data;
+    for (idx = _m = 0, _len4 = _ref26.length; _m < _len4; idx = ++_m) {
+      tile = _ref26[idx];
       if (tile === 0) {
         col = idx % objects.width;
         row = Math.floor(idx / objects.width);
@@ -1242,12 +1219,12 @@ LevelLoaderSystem = (function(_super) {
             }
           ]
         ]);
-        acornsLeft.amount++;
+        break;
       }
     }
-    _ref28 = [[3, 16], [16, 3]];
-    for (_n = 0, _len5 = _ref28.length; _n < _len5; _n++) {
-      _ref29 = _ref28[_n], col = _ref29[0], row = _ref29[1];
+    _ref27 = [[3, 16], [16, 3]];
+    for (_n = 0, _len5 = _ref27.length; _n < _len5; _n++) {
+      _ref28 = _ref27[_n], col = _ref28[0], row = _ref28[1];
       fireEnemy = this.entityManager.createEntityWithComponents([
         ['SpreadingFireComponent', {}], ['EnemyComponent', {}], [
           'PixelPositionComponent', {
@@ -1279,10 +1256,10 @@ LevelLoaderSystem = (function(_super) {
         ]
       ]);
     }
-    _ref30 = [[3, 3], [16, 16]];
+    _ref29 = [[3, 3], [16, 16]];
     _results = [];
-    for (i = _o = 0, _len6 = _ref30.length; _o < _len6; i = ++_o) {
-      _ref31 = _ref30[i], col = _ref31[0], row = _ref31[1];
+    for (i = _o = 0, _len6 = _ref29.length; _o < _len6; i = ++_o) {
+      _ref30 = _ref29[i], col = _ref30[0], row = _ref30[1];
       _results.push(dog = this.entityManager.createEntityWithComponents([
         ['EnemyComponent', {}], [
           'GridPositionComponent', {
@@ -1348,28 +1325,28 @@ LevelLoaderSystem = (function(_super) {
           'AnimationActionComponent', {
             name: 'walk-right',
             row: 0,
-            indices: [0, 1, 2, 1],
+            indices: [0, 1, 2],
             frameLength: 100
           }
         ], [
           'AnimationActionComponent', {
             name: 'walk-left',
             row: 1,
-            indices: [0, 1, 2, 1],
+            indices: [0, 1, 2],
             frameLength: 100
           }
         ], [
           'AnimationActionComponent', {
             name: 'walk-down',
             row: 2,
-            indices: [0, 1, 2, 1],
+            indices: [0, 1, 2],
             frameLength: 100
           }
         ], [
           'AnimationActionComponent', {
             name: 'walk-up',
             row: 3,
-            indices: [0, 1, 2, 1],
+            indices: [0, 1, 2],
             frameLength: 100
           }
         ]
