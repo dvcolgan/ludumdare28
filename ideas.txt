@@ -1,3 +1,49 @@
 You are a squirrel in a forest running away from dogs
 also the humans are burning the forest because they are playing for sport and are hurting the environment
 
+
+Enemy types:
+    dogs - chase you
+    fire - blocks, kills you if you walk into it, spreads slowly, has low chance of burning out each tick
+
+spreading fire
+
+you only get one powerup per level - makes you faster, can run through fires and enemies
+
+Powerups:
+    superspeed
+    invincibility
+    make everything scared of you
+    increased pickup radius?
+    
+
+the level ends when there are no more acorns
+
+you can use one of several powerups once per level
+
+
+
+todo:
+    activate powerup
+    have fires burn acorns
+    have fires kill player
+    have fires spread and burn out with very low chance
+
+    level changing
+
+    make dog enemy that chases you and avoid fires
+
+    -pathfinding use astar.js
+
+    human laying fire
+
+    game over screen where it shows the total number of acorns you got
+
+    start with 3 lives and get another one after 1000 acorns
+
+    fix the controls so that it prefers the opposite of the previous direction
+
+    acorns are happy when you are near and sad when enemies are near
+
+    acorns blinking at random
+    acorns look at the entity closest to them, not just the player

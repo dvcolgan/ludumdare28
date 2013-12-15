@@ -35,33 +35,33 @@ class GridMovementSystem extends System
                     if dy < 0 then direction.direction = 'up'
                     if dy > 0 then direction.direction = 'down'
 
-                    for [_, collisionLayer] in @entityManager.iterateEntitiesAndComponents(['TilemapCollisionLayerComponent'])
+                    for [noop, collisionLayer] in @entityManager.iterateEntitiesAndComponents(['TilemapCollisionLayerComponent'])
                         tileIdx = (gridPosition.row+dy) * collisionLayer.tileData.width + (gridPosition.col+dx)
                         nextTile = collisionLayer.tileData.data[tileIdx]
                         if nextTile == 0
-                            canMove = true
-                            for [_, otherGridPosition, _] in @entityManager.iterateEntitiesAndComponents(['GridPositionComponent', 'CollidableComponent'])
-                                if (gridPosition.col+dx) == otherGridPosition.col and (gridPosition.row+dy) == otherGridPosition.row
-                                    canMove = false
-                            if canMove
-                                if dx > 0 or dx < 0
-                                    #pixelPosition.x += gridPosition.gridSize * dx
-                                    @entityManager.addComponent(entity, 'TweenComponent', {
-                                        speed: movement.speed,
-                                        start: pixelPosition.x, dest: pixelPosition.x + gridPosition.gridSize * dx,
-                                        component: pixelPosition, attr: 'x', easingFn: 'linear'
-                                    })
-                                if dy > 0 or dy < 0
-                                    #pixelPosition.y += gridPosition.gridSize * dy
-                                    @entityManager.addComponent(entity, 'TweenComponent', {
-                                        speed: movement.speed,
-                                        start: pixelPosition.y, dest: pixelPosition.y + gridPosition.gridSize * dy,
-                                        component: pixelPosition, attr: 'y', easingFn: 'linear'
-                                    })
-                                ((entity) =>
-                                    @eventManager.subscribeOnce 'tween-end', entity, =>
-                                        @eventManager.trigger('movement-enter-square', entity, { col: gridPosition.col, row: gridPosition.row })
-                                )(entity)
+                            #canMove = true
+                            #for [noop, otherGridPosition, _] in @entityManager.iterateEntitiesAndComponents(['GridPositionComponent', 'CollidableComponent'])
+                            #    if (gridPosition.col+dx) == otherGridPosition.col and (gridPosition.row+dy) == otherGridPosition.row
+                            #        canMove = false
+                            #if canMove
+                            if dx > 0 or dx < 0
+                                #pixelPosition.x += gridPosition.gridSize * dx
+                                @entityManager.addComponent(entity, 'TweenComponent', {
+                                    speed: movement.speed,
+                                    start: pixelPosition.x, dest: pixelPosition.x + gridPosition.gridSize * dx,
+                                    component: pixelPosition, attr: 'x', easingFn: 'linear'
+                                })
+                            if dy > 0 or dy < 0
+                                #pixelPosition.y += gridPosition.gridSize * dy
+                                @entityManager.addComponent(entity, 'TweenComponent', {
+                                    speed: movement.speed,
+                                    start: pixelPosition.y, dest: pixelPosition.y + gridPosition.gridSize * dy,
+                                    component: pixelPosition, attr: 'y', easingFn: 'linear'
+                                })
+                            ((entity) =>
+                                @eventManager.subscribeOnce 'tween-end', entity, =>
+                                    @eventManager.trigger('movement-enter-square', entity, { col: gridPosition.col, row: gridPosition.row })
+                            )(entity)
 
 
 class TweenSystem extends System
@@ -103,7 +103,7 @@ class TweenSystem extends System
 class ShapeRenderSystem extends System
 
     draw: ->
-        [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         for [entity, position, color, shape, direction] in @entityManager.iterateEntitiesAndComponents(['PixelPositionComponent', 'ColorComponent', 'ShapeRendererComponent', 'DirectionComponent'])
             @cq.fillStyle(color.color)
@@ -133,7 +133,7 @@ class ShapeRenderSystem extends System
 
 class InputSystem extends System
     updateKey: (key, value) ->
-        for [entity, _, input] in @entityManager.iterateEntitiesAndComponents(['KeyboardArrowsInputComponent', 'ActionInputComponent'])
+        for [entity, noop, input] in @entityManager.iterateEntitiesAndComponents(['KeyboardArrowsInputComponent', 'ActionInputComponent'])
             if input.enabled or value == off
                 if value == off
                     if key == 'left'  then input.left = off
@@ -164,7 +164,7 @@ class InputSystem extends System
 # TODO make this generic for any key using a nice hash table
 class RandomInputSystem extends System
     update: (delta) ->
-        for [entity, _, input] in @entityManager.iterateEntitiesAndComponents(['RandomArrowsInputComponent', 'ActionInputComponent'])
+        for [entity, noop, input] in @entityManager.iterateEntitiesAndComponents(['RandomArrowsInputComponent', 'ActionInputComponent'])
             input.left = input.right = input.up = input.down = false
             chance = 0.002
             if Math.random() < chance
@@ -178,6 +178,48 @@ class RandomInputSystem extends System
             if Math.random() < chance
                 if input.action == 'hit' then input.action = 'held' else input.action = 'hit'
                 
+
+
+
+class AstarInputSystem extends System
+    update: (delta) ->
+        [player, noop, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
+        for [entity, noop, noop, input, enemyPosition] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'AstarInputComponent', 'ActionInputComponent', 'GridPositionComponent'])
+            input.left = input.right = input.up = input.down = false
+
+            if enemyPosition.justEntered
+
+                [collisionEntity, collisionLayer] = @entityManager.getFirstEntityAndComponents(['TilemapCollisionLayerComponent'])
+
+                tiles2D = _.groupBy collisionLayer.tileData.data, (tile, idx) ->
+                    Math.floor(idx/collisionLayer.tileData.width)
+
+                tiles2D = ([] for i in [0...collisionLayer.tileData.height])
+                for tile, i in collisionLayer.tileData.data
+                    weight = 0
+                    if tile == 0 then weight = 1
+                    tiles2D[i % collisionLayer.tileData.width][Math.floor(i / collisionLayer.tileData.height)] = weight
+
+                graph = new Graph(tiles2D)
+
+                start = graph.nodes[enemyPosition.col][enemyPosition.row]
+                end = graph.nodes[playerPosition.col][playerPosition.row]
+                result = astar.search(graph.nodes, start, end)
+                if result.length > 0
+                    first = result[0]
+                    col = first.x
+                    row = first.y
+
+                    dx = col - enemyPosition.col
+                    dy = row - enemyPosition.row
+
+                    console.log dx + ' ' + dy
+
+                    if dx < 0 then input.left = yes
+                    if dx > 0 then input.right = yes
+                    if dy < 0 then input.up = yes
+                    if dy > 0 then input.down = yes
+
 
 
 class MovementSystem extends System
@@ -195,8 +237,8 @@ class MovementSystem extends System
 
 class CameraFollowingSystem extends System
     update: (delta) ->
-        [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
-        [followee, _, followeePosition] = @entityManager.getFirstEntityAndComponents(['CameraFollowsComponent', 'PixelPositionComponent'])
+        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [followee, noop, followeePosition] = @entityManager.getFirstEntityAndComponents(['CameraFollowsComponent', 'PixelPositionComponent'])
 
         [mapLayer, mapLayerComponent] = @entityManager.getFirstEntityAndComponents(['TilemapVisibleLayerComponent'])
 
@@ -216,7 +258,7 @@ class CameraFollowingSystem extends System
 class TilemapRenderingSystem extends System
 
     draw: (delta) ->
-        [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         entities = @entityManager.getEntitiesHavingComponent('TilemapVisibleLayerComponent')
         layers = []
@@ -258,7 +300,7 @@ class TilemapRenderingSystem extends System
 
 class DialogRenderingSystem extends System
     update: (delta) ->
-        [playerEntity, _, playerGridPosition, playerDirection, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent', 'DirectionComponent', 'ActionInputComponent'])
+        [playerEntity, noop, playerGridPosition, playerDirection, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent', 'DirectionComponent', 'ActionInputComponent'])
         if playerInput.enabled
             if playerInput.action == 'hit'
                 for [otherEntity, otherDirection, otherGridPosition, ] in @entityManager.iterateEntitiesAndComponents(['DirectionComponent', 'GridPositionComponent'])
@@ -287,7 +329,7 @@ class DialogRenderingSystem extends System
             if dialogInput.action == 'hit'
                 dialogInput.enabled = no
                 dialogBox.visible = false
-                [playerEntity, _, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'ActionInputComponent'])
+                [playerEntity, noop, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'ActionInputComponent'])
                 playerInput.enabled = yes
                 talkeeInput = @entityManager.getComponent(dialogBox.talkee, 'ActionInputComponent')
                 if talkeeInput then talkeeInput.enabled = yes
@@ -295,7 +337,7 @@ class DialogRenderingSystem extends System
             
 
     draw: (delta) ->
-        [_, dialogBox, dialogBoxText] = @entityManager.getFirstEntityAndComponents(['DialogBoxComponent', 'DialogBoxTextComponent'])
+        [noop, dialogBox, dialogBoxText] = @entityManager.getFirstEntityAndComponents(['DialogBoxComponent', 'DialogBoxTextComponent'])
         
         if dialogBox.visible
             @cq.font('16px "Press Start 2P"').textBaseline('top').fillStyle('black')
@@ -309,11 +351,13 @@ class DialogRenderingSystem extends System
 
 class AnimationDirectionSyncSystem extends System
     update: (delta) ->
-        for [animationEntity, animation, direction, movement] in @entityManager.iterateEntitiesAndComponents(['AnimationComponent', 'DirectionComponent', 'GridMovementComponent'])
+        for [animationEntity, animation, gridPosition, direction, movement] in @entityManager.iterateEntitiesAndComponents(['AnimationComponent', 'GridPositionComponent', 'DirectionComponent', 'GridMovementComponent'])
             if movement.isMoving
                 animation.currentAction = 'walk-' + direction.direction
             else
-                animation.currentAction = 'idle-' + direction.direction
+                if not gridPosition.justEntered
+                    animation.currentAction = 'idle-' + direction.direction
+
 
 
 
@@ -332,7 +376,7 @@ class AnimatedSpriteSystem extends System
                     break
 
     draw: ->
-        [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         for [animationEntity, animation, animationPosition] in @entityManager.iterateEntitiesAndComponents(['AnimationComponent', 'PixelPositionComponent'])
 
@@ -356,7 +400,7 @@ class AnimatedSpriteSystem extends System
 
 class StaticSpriteRenderSystem extends System
     draw: ->
-        [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         for [spriteEntity, sprite, position] in @entityManager.iterateEntitiesAndComponents(['StaticSpriteComponent', 'PixelPositionComponent'])
             screenX = Math.floor(position.x - cameraPosition.x)
@@ -366,7 +410,7 @@ class StaticSpriteRenderSystem extends System
 
 class EyeFollowingSystem extends System
     draw: ->
-        [camera, _, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
         for [eyeEntity, eyes, eyeHaverPosition] in @entityManager.iterateEntitiesAndComponents(['EyeHavingComponent', 'PixelPositionComponent'])
             #TODO cull the acorns offscreen
             targetPosition = @entityManager.getComponent(eyes.targetEntity, 'PixelPositionComponent')
@@ -394,7 +438,7 @@ class EyeFollowingSystem extends System
 
 class AcornSystem extends System
     update: (delta) ->
-        [player, _, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
+        [player, noop, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
         [scoreEntity, score, acornsLeft] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent'])
 
         for [acornEntity, acorn, acornPosition] in @entityManager.iterateEntitiesAndComponents(['AcornComponent', 'GridPositionComponent'])
@@ -406,4 +450,23 @@ class AcornSystem extends System
                     console.log 'WINNER'
 
 
+class ScoreRenderingSystem extends System
+    draw: ->
+        [scoreEntity, score, acornsLeft, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent', 'LivesComponent'])
+
+        @cq.fillStyle('rgba(0,0,0,0.8)')
+        @cq.roundRect(-30, -30, 156, 70, 25)
+        @cq.fill()
+
+        acornsWidth = @cq.measureText('Acorns: ' + score.score).width
+        @cq.roundRect(Game.SCREEN_WIDTH - acornsWidth - 20, -30, 300, 70, 25)
+        @cq.fill()
+
+        @cq.font('30px "Merienda One"').textAlign('left').textBaseline('top').fillStyle('white')
+        @cq.fillText('Lives: ' + lives.lives, 6, -2)
+        #@cq.lineWidth(1).strokeStyle('white').strokeText('Lives: ' + lives.lives, 6, -2)
+
+        @cq.textAlign('right').fillStyle('white')
+        @cq.fillText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 6, -2)
+        #@cq.lineWidth(3).strokeStyle('black').strokeText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 10, -4)
 

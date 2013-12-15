@@ -82,7 +82,7 @@ OverworldState = (function(_super) {
         'GridMovementComponent', {
           speed: 0.4
         }
-      ], ['CollidableComponent', {}], ['CameraFollowsComponent', {}], [
+      ], ['CollidableComponent', {}], [
         'AnimationComponent', {
           currentAction: 'idle-right',
           spritesheetUrl: 'squirrel.png',
@@ -123,31 +123,31 @@ OverworldState = (function(_super) {
         'AnimationActionComponent', {
           name: 'walk-right',
           row: 0,
-          indices: [0, 0, 0, 1, 2, 2, 2, 1],
-          frameLength: 100
+          indices: [0, 1, 2, 1],
+          frameLength: 50
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-left',
           row: 1,
-          indices: [0, 0, 0, 1, 2, 2, 2, 1],
-          frameLength: 100
+          indices: [0, 1, 2, 1],
+          frameLength: 50
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-down',
           row: 2,
-          indices: [0, 0, 0, 1, 2, 2, 2, 1],
-          frameLength: 100
+          indices: [0, 1, 2, 1],
+          frameLength: 50
         }
       ], [
         'AnimationActionComponent', {
           name: 'walk-up',
           row: 3,
-          indices: [0, 0, 0, 1, 2, 2, 2, 1],
-          frameLength: 100
+          indices: [0, 1, 2, 1],
+          frameLength: 50
         }
-      ]
+      ], ['CameraFollowsComponent', {}]
     ]);
     camera = this.entityManager.createEntityWithComponents([
       ['CameraComponent', {}], [
@@ -166,6 +166,10 @@ OverworldState = (function(_super) {
         'AcornsLeftComponent', {
           amount: 0
         }
+      ], [
+        'LivesComponent', {
+          lives: 3
+        }
       ]
     ]);
     this.loadLevel('level1.json');
@@ -180,20 +184,22 @@ OverworldState = (function(_super) {
     this.animatedSpriteSystem = new AnimatedSpriteSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
     this.staticSpriteRenderSystem = new StaticSpriteRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
     this.eyeFollowingSystem = new EyeFollowingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
-    return this.acornSystem = new AcornSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.acornSystem = new AcornSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.astarInputSystem = new AstarInputSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    return this.scoreRenderingSystem = new ScoreRenderingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
   };
 
   OverworldState.prototype.loadLevel = function(tileDataUrl) {
-    var acorn, acornsLeft, background, backgroundLayer, col, collisionEntity, collisionLayer, entity, idx, layerEntity, mapData, objects, objectsLayer, oldLayers, player, playerGridPosition, playerPixelPosition, row, tile, _, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _results;
+    var acorn, acornsLeft, background, backgroundLayer, col, collisionEntity, collisionLayer, dog, entity, fireEnemy, idx, layerEntity, mapData, noop, objects, objectsLayer, oldLayers, player, playerGridPosition, playerPixelPosition, row, tile, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref1, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
     oldLayers = [];
     _ref1 = this.entityManager.iterateEntitiesAndComponents(['TilemapVisibleLayerComponent']);
     for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-      _ref2 = _ref1[_i], layerEntity = _ref2[0], _ = _ref2[1];
+      _ref2 = _ref1[_i], layerEntity = _ref2[0], noop = _ref2[1];
       oldLayers.push(layerEntity);
     }
     _ref3 = this.entityManager.iterateEntitiesAndComponents(['TilemapCollisionLayerComponent']);
     for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
-      _ref4 = _ref3[_j], collisionEntity = _ref4[0], _ = _ref4[1];
+      _ref4 = _ref3[_j], collisionEntity = _ref4[0], noop = _ref4[1];
       oldLayers.push(collisionEntity);
     }
     for (_k = 0, _len2 = oldLayers.length; _k < _len2; _k++) {
@@ -232,15 +238,14 @@ OverworldState = (function(_super) {
         }
       ]
     ]);
-    _ref5 = this.entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent', 'GridPositionComponent']), player = _ref5[0], _ = _ref5[1], playerPixelPosition = _ref5[2], playerGridPosition = _ref5[3];
+    _ref5 = this.entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent', 'GridPositionComponent']), player = _ref5[0], noop = _ref5[1], playerPixelPosition = _ref5[2], playerGridPosition = _ref5[3];
     playerGridPosition.col = 9;
     playerGridPosition.row = 11;
-    playerPixelPosition.col = 9 * Game.GRID_SIZE;
-    playerPixelPosition.row = 11 * Game.GRID_SIZE;
-    _ref6 = this.entityManager.getFirstEntityAndComponents(['AcornsLeftComponent']), _ = _ref6[0], acornsLeft = _ref6[1];
+    playerPixelPosition.x = 9 * Game.GRID_SIZE;
+    playerPixelPosition.y = 11 * Game.GRID_SIZE;
+    _ref6 = this.entityManager.getFirstEntityAndComponents(['AcornsLeftComponent']), noop = _ref6[0], acornsLeft = _ref6[1];
     acornsLeft.amount = 0;
     _ref7 = objects.data;
-    _results = [];
     for (idx = _l = 0, _len3 = _ref7.length; _l < _len3; idx = ++_l) {
       tile = _ref7[idx];
       if (tile === 0) {
@@ -270,15 +275,196 @@ OverworldState = (function(_super) {
             }
           ]
         ]);
-        _results.push(acornsLeft.amount++);
-      } else {
-        _results.push(void 0);
+        acornsLeft.amount++;
       }
     }
-    return _results;
+    _ref8 = [[3, 3], [3, 16], [16, 3], [16, 16]];
+    for (_m = 0, _len4 = _ref8.length; _m < _len4; _m++) {
+      _ref9 = _ref8[_m], col = _ref9[0], row = _ref9[1];
+      fireEnemy = this.entityManager.createEntityWithComponents([
+        ['EnemyComponent', {}], [
+          'PixelPositionComponent', {
+            x: col * Game.GRID_SIZE,
+            y: row * Game.GRID_SIZE
+          }
+        ], [
+          'GridPositionComponent', {
+            col: col,
+            row: row,
+            gridSize: Game.GRID_SIZE
+          }
+        ], [
+          'DirectionComponent', {
+            direction: 'right'
+          }
+        ], ['ActionInputComponent', {}], ['RandomArrowsInputComponent', {}], [
+          'GridMovementComponent', {
+            speed: 0.35
+          }
+        ], ['CollidableComponent', {}], [
+          'AnimationComponent', {
+            currentAction: 'idle-right',
+            spritesheetUrl: 'fire.png',
+            frameWidth: 64,
+            frameHeight: 76,
+            offsetX: 0,
+            offsetY: 12
+          }
+        ], [
+          'AnimationActionComponent', {
+            name: 'idle-right',
+            row: 0,
+            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
+            frameLength: 50
+          }
+        ], [
+          'AnimationActionComponent', {
+            name: 'idle-left',
+            row: 0,
+            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
+            frameLength: 50
+          }
+        ], [
+          'AnimationActionComponent', {
+            name: 'idle-up',
+            row: 0,
+            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
+            frameLength: 50
+          }
+        ], [
+          'AnimationActionComponent', {
+            name: 'idle-down',
+            row: 0,
+            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
+            frameLength: 50
+          }
+        ], [
+          'AnimationActionComponent', {
+            name: 'walk-right',
+            row: 0,
+            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
+            frameLength: 50
+          }
+        ], [
+          'AnimationActionComponent', {
+            name: 'walk-left',
+            row: 0,
+            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
+            frameLength: 50
+          }
+        ], [
+          'AnimationActionComponent', {
+            name: 'walk-up',
+            row: 0,
+            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
+            frameLength: 50
+          }
+        ], [
+          'AnimationActionComponent', {
+            name: 'walk-down',
+            row: 0,
+            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
+            frameLength: 50
+          }
+        ]
+      ]);
+    }
+    _ref10 = _.sample([[3, 3], [3, 16], [16, 3], [16, 16]]), col = _ref10[0], row = _ref10[1];
+    return dog = this.entityManager.createEntityWithComponents([
+      ['EnemyComponent', {}], [
+        'GridPositionComponent', {
+          col: col,
+          row: row,
+          gridSize: Game.GRID_SIZE
+        }
+      ], [
+        'PixelPositionComponent', {
+          x: col * Game.GRID_SIZE,
+          y: row * Game.GRID_SIZE
+        }
+      ], [
+        'DirectionComponent', {
+          direction: 'right'
+        }
+      ], ['ActionInputComponent', {}], ['AstarInputComponent', {}], [
+        'ColorComponent', {
+          color: 'red'
+        }
+      ], [
+        'GridMovementComponent', {
+          speed: 0.2
+        }
+      ], ['CollidableComponent', {}], [
+        'AnimationComponent', {
+          currentAction: 'idle-right',
+          spritesheetUrl: 'dog.png',
+          frameWidth: 112,
+          frameHeight: 112,
+          offsetX: 24,
+          offsetY: 48
+        }
+      ], [
+        'AnimationActionComponent', {
+          name: 'idle-right',
+          row: 0,
+          indices: [0],
+          frameLength: 100
+        }
+      ], [
+        'AnimationActionComponent', {
+          name: 'idle-left',
+          row: 1,
+          indices: [0],
+          frameLength: 100
+        }
+      ], [
+        'AnimationActionComponent', {
+          name: 'idle-down',
+          row: 2,
+          indices: [0],
+          frameLength: 100
+        }
+      ], [
+        'AnimationActionComponent', {
+          name: 'idle-up',
+          row: 3,
+          indices: [0],
+          frameLength: 100
+        }
+      ], [
+        'AnimationActionComponent', {
+          name: 'walk-right',
+          row: 0,
+          indices: [0, 1, 2, 1],
+          frameLength: 50
+        }
+      ], [
+        'AnimationActionComponent', {
+          name: 'walk-left',
+          row: 1,
+          indices: [0, 1, 2, 1],
+          frameLength: 50
+        }
+      ], [
+        'AnimationActionComponent', {
+          name: 'walk-down',
+          row: 2,
+          indices: [0, 1, 2, 1],
+          frameLength: 50
+        }
+      ], [
+        'AnimationActionComponent', {
+          name: 'walk-up',
+          row: 3,
+          indices: [0, 1, 2, 1],
+          frameLength: 50
+        }
+      ]
+    ]);
   };
 
   OverworldState.prototype.step = function(delta, time) {
+    this.astarInputSystem.update(delta, time);
     this.gridMovementSystem.update(delta, time);
     this.tweenSystem.update(delta, time);
     this.randomInputSystem.update(delta, time);
@@ -294,7 +480,8 @@ OverworldState = (function(_super) {
     this.shapeRenderSystem.draw();
     this.staticSpriteRenderSystem.draw();
     this.eyeFollowingSystem.draw();
-    return this.animatedSpriteSystem.draw();
+    this.animatedSpriteSystem.draw();
+    return this.scoreRenderingSystem.draw();
   };
 
   OverworldState.prototype.keyUp = function(key) {
@@ -325,10 +512,12 @@ Game = (function() {
     this.assetManager.loadImage('squirrel.png');
     this.assetManager.loadImage('acorn.png');
     this.assetManager.loadImage('acorn-eyes.png');
-    this.assetManager.loadTilemap('sad-forest.json');
+    this.assetManager.loadImage('fire.png');
+    this.assetManager.loadImage('dog.png');
     this.assetManager.loadTilemap('level1.json');
     this.assetManager.loadTilemap('level2.json');
     this.assetManager.loadTilemap('level3.json');
+    this.assetManager.loadTilemap('testlevel.json');
     this.assetManager.start(function() {
       _this.states.push(new OverworldState(_this.cq, _this.assetManager));
       return _this.states[0].start();

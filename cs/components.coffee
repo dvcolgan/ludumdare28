@@ -1,6 +1,8 @@
 window.components =
     PlayerComponent: {}
 
+    EnemyComponent: {}
+
     PixelPositionComponent:
         x: 0
         y: 0
@@ -15,7 +17,7 @@ window.components =
         col: 0
         row: 0
         gridSize: 32
-        justEntered: no
+        justEntered: yes
 
     ColorComponent:
         color: 'black'
@@ -129,4 +131,7 @@ window.components =
     AcornsLeftComponent:
         amount: 0
 
+    AstarInputComponent: {}
 
+    LivesComponent:
+        lives: 3
