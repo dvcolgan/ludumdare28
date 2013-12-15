@@ -89,6 +89,8 @@ class PlayState extends GameState
         @scoreRenderingSystem = new ScoreRenderingSystem(@cq, @entityManager, @eventManager, @assetManager)
         @enemyDamageSystem = new EnemyDamageSystem(@cq, @entityManager, @eventManager, @assetManager)
         @levelLoaderSystem = new LevelLoaderSystem(@cq, @entityManager, @eventManager, @assetManager)
+        @fireSpreadingSystem = new FireSpreadingSystem(@cq, @entityManager, @eventManager, @assetManager)
+        @multiStateStaticSpriteRenderSystem = new MultiStateStaticSpriteRenderSystem(@cq, @entityManager, @eventManager, @assetManager)
 
 
         @eventManager.trigger('next-level', player)
@@ -96,6 +98,7 @@ class PlayState extends GameState
 
     step: (delta, time) ->
         @eventManager.pump()
+        @fireSpreadingSystem.update(delta, time)
         @astarInputSystem.update(delta, time)
         @gridMovementSystem.update(delta, time)
         @tweenSystem.update(delta, time)
@@ -111,6 +114,7 @@ class PlayState extends GameState
         @tilemapRenderingSystem.draw()
         @shapeRenderSystem.draw()
         @staticSpriteRenderSystem.draw()
+        @multiStateStaticSpriteRenderSystem.draw()
         @eyeFollowingSystem.draw()
         @animatedSpriteSystem.draw()
         @scoreRenderingSystem.draw()

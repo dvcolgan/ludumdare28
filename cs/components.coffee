@@ -105,6 +105,12 @@ window.components =
     StaticSpriteComponent:
         spriteUrl: ''
 
+    MultiStateSpriteComponent:
+        spriteUrl: ''
+        frameWidth: 32
+        frameHeight: 32
+        currentFrame: 0
+
     AnimationComponent:
         currentAction: 'walk-down'
         spritesheetUrl: ''
@@ -140,5 +146,7 @@ window.components =
         level: 1
 
     SpreadingFireComponent:
-        strength: 0
+        strength: 200
         chance: 0.01
+        eventTimer: 0
+        interval: 2

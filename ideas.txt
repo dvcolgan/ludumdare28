@@ -25,9 +25,9 @@ you can use one of several powerups once per level
 
 todo:
     activate powerup
-    have fires burn acorns
-    have fires kill player
-    have fires spread and burn out with very low chance
+    -have fires burn acorns
+    -have fires kill player
+    -have fires spread and burn out with very low chance
 
     level changing
 
@@ -38,7 +38,7 @@ todo:
     human laying fire
     make the ground grass instead of doritos
 
-    game over screen where it shows the total number of acorns you got
+    -game over screen where it shows the total number of acorns you got
 
     start with 3 lives and get another one after 1000 acorns
 
@@ -48,3 +48,9 @@ todo:
 
     acorns blinking at random
     acorns look at the entity closest to them, not just the player
+
+    if you hold a key while dying you don't go back to the middle
+
+    make the acorns animate when they catch fire (same with the trees)
+
+    gust of wind with leaves showing where fire will spread

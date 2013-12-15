@@ -213,8 +213,6 @@ class AstarInputSystem extends System
                     dx = col - enemyPosition.col
                     dy = row - enemyPosition.row
 
-                    console.log dx + ' ' + dy
-
                     if dx < 0 then input.left = yes
                     if dx > 0 then input.right = yes
                     if dy < 0 then input.up = yes
@@ -409,6 +407,21 @@ class StaticSpriteRenderSystem extends System
             screenY = Math.floor(position.y - cameraPosition.y)
             @cq.drawImage(@assetManager.assets[sprite.spriteUrl], screenX, screenY)
 
+class MultiStateStaticSpriteRenderSystem extends System
+    draw: ->
+        [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+
+        for [spriteEntity, sprite, position] in @entityManager.iterateEntitiesAndComponents(['MultiStateSpriteComponent', 'PixelPositionComponent'])
+            screenX = Math.floor(position.x - cameraPosition.x)
+            screenY = Math.floor(position.y - cameraPosition.y)
+            @cq.drawImage(
+                @assetManager.assets[sprite.spriteUrl],
+                sprite.currentFrame * sprite.frameWidth, 0,
+                sprite.frameWidth, sprite.frameHeight,
+                screenX, screenY,
+                sprite.frameWidth, sprite.frameHeight
+            )
+
 
 class EyeFollowingSystem extends System
     draw: ->
@@ -416,6 +429,9 @@ class EyeFollowingSystem extends System
         for [eyeEntity, eyes, eyeHaverPosition] in @entityManager.iterateEntitiesAndComponents(['EyeHavingComponent', 'PixelPositionComponent'])
             #TODO cull the acorns offscreen
             targetPosition = @entityManager.getComponent(eyes.targetEntity, 'PixelPositionComponent')
+            if targetPosition == null
+                [player, targetPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent'])
+                eyes.targetEntity = player
             dx = targetPosition.x - eyeHaverPosition.x
             dy = targetPosition.y - eyeHaverPosition.y
 
@@ -441,15 +457,54 @@ class EyeFollowingSystem extends System
 class AcornSystem extends System
     update: (delta) ->
         [player, __, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
-        [scoreEntity, score, acornsLeft] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent'])
+        [scoreEntity, score, acornsLeft, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent', 'LivesComponent'])
+        [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
-        for [acornEntity, acorn, acornPosition] in @entityManager.iterateEntitiesAndComponents(['AcornComponent', 'GridPositionComponent'])
-            if acornPosition.col == playerPosition.col and acornPosition.row == playerPosition.row
-                @entityManager.removeEntity(acornEntity)
-                score.score++
-                acornsLeft.amount--
-                if acornsLeft.amount == 0
-                    @eventManager.trigger('next-level', player)
+        if (player == null) or (scoreEntity == null) or (camera == null)
+            return
+
+        enemies = @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'GridPositionComponent'])
+
+        minScreenCol = Math.floor(cameraPosition.x/Game.GRID_SIZE)
+        minScreenRow = Math.floor(cameraPosition.y/Game.GRID_SIZE)
+
+        maxScreenCol = minScreenCol + Math.ceil(Game.SCREEN_WIDTH/Game.GRID_SIZE)
+        maxScreenRow = minScreenRow + Math.ceil(Game.SCREEN_HEIGHT/Game.GRID_SIZE)
+
+        for [acornEntity, acorn, acornPosition, eyes, sprite] in @entityManager.iterateEntitiesAndComponents(['AcornComponent', 'GridPositionComponent', 'EyeHavingComponent', 'MultiStateSpriteComponent'])
+
+            if acornPosition.col >= minScreenCol and acornPosition.col <= maxScreenCol and
+               acornPosition.row >= minScreenRow and acornPosition.row <= maxScreenRow
+
+                if acornPosition.col == playerPosition.col and acornPosition.row == playerPosition.row
+                    @entityManager.removeEntity(acornEntity)
+                    score.score++
+                    if score.score == 1000
+                        lives.lives++
+
+
+                    acornsLeft.amount--
+                
+                closest = player
+                closestDist = util.dist(
+                    acornPosition.col, acornPosition.row,
+                    playerPosition.col, playerPosition.row
+                )
+                sprite.currentFrame = 0
+                for [enemyEntity, enemy, enemyPosition] in enemies
+                    dist = util.dist(
+                        acornPosition.col, acornPosition.row,
+                        enemyPosition.col, enemyPosition.row
+                    )
+                    if dist < closestDist
+                        closest = enemyEntity
+                        closestDist = dist
+                        sprite.currentFrame = 1
+                eyes.targetEntity = closest
+
+        if acornsLeft.amount == 0
+            @eventManager.trigger('next-level', player)
+
 
 
 class ScoreRenderingSystem extends System
@@ -480,8 +535,6 @@ class EnemyDamageSystem extends System
 
         for [enemy, __, enemyPosition] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'GridPositionComponent'])
             if enemyPosition.col == playerPosition.col and enemyPosition.row == playerPosition.row
-                console.log 'HIT'
-
                 [scoreEntity, score, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent'])
                 lives.lives--
                 if lives.lives > 0
@@ -500,15 +553,60 @@ class EnemyDamageSystem extends System
 
 class FireSpreadingSystem extends System
     update: (delta) ->
-        for [fire, spreading] in @entityManager.iterateEntitiesAndComponents(['SpreadingFireComponent'])
-            if Math.random() < spreading.chance
-                true
+        for [fire, spreading, firePosition] in @entityManager.iterateEntitiesAndComponents(['SpreadingFireComponent', 'GridPositionComponent'])
+            spreading.eventTimer += delta
+            if spreading.eventTimer >= spreading.interval
+                spreading.eventTimer = 0
+                spreading.strength--
+                if spreading.strength == 0
+                    @entityManager.removeEntity(fire)
 
+                if Math.random() < spreading.chance
+
+                    for [acornEntity, acorn, acornPosition] in @entityManager.iterateEntitiesAndComponents(['AcornComponent', 'GridPositionComponent'])
+                        if acornPosition.col == firePosition.col and acornPosition.row == firePosition.row
+                            @entityManager.removeEntity(acornEntity)
+                            break
+
+                    direction = _.sample(['left','right','up','down'])
+                    if direction == 'left'
+                        newCol = firePosition.col - 1
+                        newRow = firePosition.row
+                    if direction == 'right'
+                        newCol = firePosition.col + 1
+                        newRow = firePosition.row
+                    if direction == 'up'
+                        newCol = firePosition.col
+                        newRow = firePosition.row - 1
+                    if direction == 'down'
+                        newCol = firePosition.col
+                        newRow = firePosition.row + 1
+
+                    doSpread = yes
+                    for [__, __, otherFirePosition] in @entityManager.iterateEntitiesAndComponents(['SpreadingFireComponent', 'GridPositionComponent'])
+                        if otherFirePosition.col == newCol and otherFirePosition.row == newRow
+                            doSpread = no
+
+                    # Only spread if there isn't a fire here
+                    if doSpread
+                        newFireEnemy = @entityManager.createEntityWithComponents([
+                            ['SpreadingFireComponent', {}]
+                            ['EnemyComponent', {}]
+                            ['PixelPositionComponent', { x: newCol * Game.GRID_SIZE, y: newRow * Game.GRID_SIZE }]
+                            ['GridPositionComponent', { col: newCol, row: newRow, gridSize: Game.GRID_SIZE }]
+                            ['CollidableComponent', {}]
+                            ['AnimationComponent', { currentAction: 'fire', spritesheetUrl: 'fire.png', frameWidth: 64, frameHeight: 76, offsetX: 0, offsetY: 12 }]
+                            ['AnimationActionComponent', { name: 'fire', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
+                        ])
+
+                    for [acornEntity, acorn, acornPosition] in @entityManager.iterateEntitiesAndComponents(['AcornComponent', 'GridPositionComponent'])
+                        if acornPosition.col == firePosition.col and acornPosition.row == firePosition.row
+                            @entityManager.remove(acornEntity)
+                            break
 
 
 class LevelLoaderSystem extends System
     constructor: (@cq, @entityManager, @eventManager, @assetManager) ->
-        console.log 'here'
         [player, __] = @entityManager.getFirstEntityAndComponents(['PlayerComponent'])
         @eventManager.subscribe 'next-level', player, =>
             [__, level] = @entityManager.getFirstEntityAndComponents(['CurrentLevelComponent'])
@@ -518,9 +616,7 @@ class LevelLoaderSystem extends System
             levelIdx = ((level.level-1) % 3) + 1
             @loadLevel('level' + levelIdx + '.json')
         
-    loadLevel: (tileDataUrl) ->
-        console.log tileDataUrl
-
+    loadLevel: (tileDataUrl, speedFactor) ->
         # Clear out old layers
         oldEntities = []
         for [enemyEntity, __] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent'])
@@ -566,25 +662,27 @@ class LevelLoaderSystem extends System
                     ['AcornComponent', {}]
                     ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
                     ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
-                    ['StaticSpriteComponent', { spriteUrl: 'acorn.png' }]
+                    ['MultiStateSpriteComponent', { spriteUrl: 'acorn.png', frameWidth: 64, frameHeight: 64 }]
                     ['EyeHavingComponent', { offsetMax: 4, targetEntity: player, eyesImageUrl: 'acorn-eyes.png' }]
                 ])
                 acornsLeft.amount++
 
         #for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
-        #    fireEnemy = @entityManager.createEntityWithComponents([
-        #        ['EnemyComponent', {}]
-        #        ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
-        #        ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
-        #        ['GridMovementComponent', { speed: 0.35 }]
-        #        ['CollidableComponent', {}]
-        #        ['AnimationComponent', { currentAction: 'fire', spritesheetUrl: 'fire.png', frameWidth: 64, frameHeight: 76, offsetX: 0, offsetY: 12 }]
-        #        ['AnimationActionComponent', {name: 'fire', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-        #    ])
+        for [col, row] in [[9,9]]
+            fireEnemy = @entityManager.createEntityWithComponents([
+                ['SpreadingFireComponent', {}]
+                ['EnemyComponent', {}]
+                ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
+                ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
+                ['CollidableComponent', {}]
+                ['AnimationComponent', { currentAction: 'fire', spritesheetUrl: 'fire.png', frameWidth: 64, frameHeight: 76, offsetX: 0, offsetY: 12 }]
+                ['AnimationActionComponent', { name: 'fire', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
+            ])
 
 
         #[col, row] = _.sample([[3, 3], [3, 16], [16, 3], [16, 16]])
         for [col, row], i in [[3, 3], [3, 16], [16, 3], [16, 16]]
+            break
             dog = @entityManager.createEntityWithComponents([
                 ['EnemyComponent', {}]
                 ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]

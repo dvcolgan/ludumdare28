@@ -223,11 +223,14 @@ PlayState = (function(_super) {
     this.scoreRenderingSystem = new ScoreRenderingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
     this.enemyDamageSystem = new EnemyDamageSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
     this.levelLoaderSystem = new LevelLoaderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.fireSpreadingSystem = new FireSpreadingSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.multiStateStaticSpriteRenderSystem = new MultiStateStaticSpriteRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
     return this.eventManager.trigger('next-level', player);
   };
 
   PlayState.prototype.step = function(delta, time) {
     this.eventManager.pump();
+    this.fireSpreadingSystem.update(delta, time);
     this.astarInputSystem.update(delta, time);
     this.gridMovementSystem.update(delta, time);
     this.tweenSystem.update(delta, time);
@@ -244,6 +247,7 @@ PlayState = (function(_super) {
     this.tilemapRenderingSystem.draw();
     this.shapeRenderSystem.draw();
     this.staticSpriteRenderSystem.draw();
+    this.multiStateStaticSpriteRenderSystem.draw();
     this.eyeFollowingSystem.draw();
     this.animatedSpriteSystem.draw();
     return this.scoreRenderingSystem.draw();
