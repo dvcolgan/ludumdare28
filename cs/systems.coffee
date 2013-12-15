@@ -571,16 +571,16 @@ class LevelLoaderSystem extends System
                 ])
                 acornsLeft.amount++
 
-        for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
-            fireEnemy = @entityManager.createEntityWithComponents([
-                ['EnemyComponent', {}]
-                ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
-                ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
-                ['GridMovementComponent', { speed: 0.35 }]
-                ['CollidableComponent', {}]
-                ['AnimationComponent', { currentAction: 'fire', spritesheetUrl: 'fire.png', frameWidth: 64, frameHeight: 76, offsetX: 0, offsetY: 12 }]
-                ['AnimationActionComponent', {name: 'fire', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-            ])
+        #for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
+        #    fireEnemy = @entityManager.createEntityWithComponents([
+        #        ['EnemyComponent', {}]
+        #        ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
+        #        ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
+        #        ['GridMovementComponent', { speed: 0.35 }]
+        #        ['CollidableComponent', {}]
+        #        ['AnimationComponent', { currentAction: 'fire', spritesheetUrl: 'fire.png', frameWidth: 64, frameHeight: 76, offsetX: 0, offsetY: 12 }]
+        #        ['AnimationActionComponent', {name: 'fire', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
+        #    ])
 
 
         #[col, row] = _.sample([[3, 3], [3, 16], [16, 3], [16, 16]])

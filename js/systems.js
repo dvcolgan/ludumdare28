@@ -1013,7 +1013,7 @@ LevelLoaderSystem = (function(_super) {
   }
 
   LevelLoaderSystem.prototype.loadLevel = function(tileDataUrl) {
-    var acorn, acornsLeft, background, backgroundLayer, col, collisionEntity, collisionLayer, dog, enemyEntity, entity, fireEnemy, i, idx, layerEntity, mapData, objects, objectsLayer, oldEntities, player, playerGridPosition, playerPixelPosition, row, tile, __, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _len6, _m, _n, _o, _ref18, _ref19, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref30, _results;
+    var acorn, acornsLeft, background, backgroundLayer, col, collisionEntity, collisionLayer, dog, enemyEntity, entity, i, idx, layerEntity, mapData, objects, objectsLayer, oldEntities, player, playerGridPosition, playerPixelPosition, row, tile, __, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref18, _ref19, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _results;
     console.log(tileDataUrl);
     oldEntities = [];
     _ref18 = this.entityManager.iterateEntitiesAndComponents(['EnemyComponent']);
@@ -1108,47 +1108,9 @@ LevelLoaderSystem = (function(_super) {
       }
     }
     _ref27 = [[3, 3], [3, 16], [16, 3], [16, 16]];
-    for (_n = 0, _len5 = _ref27.length; _n < _len5; _n++) {
-      _ref28 = _ref27[_n], col = _ref28[0], row = _ref28[1];
-      fireEnemy = this.entityManager.createEntityWithComponents([
-        ['EnemyComponent', {}], [
-          'PixelPositionComponent', {
-            x: col * Game.GRID_SIZE,
-            y: row * Game.GRID_SIZE
-          }
-        ], [
-          'GridPositionComponent', {
-            col: col,
-            row: row,
-            gridSize: Game.GRID_SIZE
-          }
-        ], [
-          'GridMovementComponent', {
-            speed: 0.35
-          }
-        ], ['CollidableComponent', {}], [
-          'AnimationComponent', {
-            currentAction: 'fire',
-            spritesheetUrl: 'fire.png',
-            frameWidth: 64,
-            frameHeight: 76,
-            offsetX: 0,
-            offsetY: 12
-          }
-        ], [
-          'AnimationActionComponent', {
-            name: 'fire',
-            row: 0,
-            indices: [0, 1, 2, 1, 3, 3, 3, 0, 3, 2, 0, 2, 2, 1, 0, 3, 1, 3, 2, 0, 3, 0, 0, 0, 1, 1, 1, 1, 1, 3, 2, 0, 2, 0, 1, 1, 3, 3, 0, 0, 1, 3, 0, 3, 0, 1, 1, 2, 0, 3],
-            frameLength: 50
-          }
-        ]
-      ]);
-    }
-    _ref29 = [[3, 3], [3, 16], [16, 3], [16, 16]];
     _results = [];
-    for (i = _o = 0, _len6 = _ref29.length; _o < _len6; i = ++_o) {
-      _ref30 = _ref29[i], col = _ref30[0], row = _ref30[1];
+    for (i = _n = 0, _len5 = _ref27.length; _n < _len5; i = ++_n) {
+      _ref28 = _ref27[i], col = _ref28[0], row = _ref28[1];
       _results.push(dog = this.entityManager.createEntityWithComponents([
         ['EnemyComponent', {}], [
           'GridPositionComponent', {
