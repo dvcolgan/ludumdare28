@@ -668,7 +668,7 @@ class LevelLoaderSystem extends System
                 acornsLeft.amount++
 
         #for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
-        for [col, row] in [[9,9]]
+        for [col, row] in [[3,16], [16,3]]
             fireEnemy = @entityManager.createEntityWithComponents([
                 ['SpreadingFireComponent', {}]
                 ['EnemyComponent', {}]
@@ -681,8 +681,7 @@ class LevelLoaderSystem extends System
 
 
         #[col, row] = _.sample([[3, 3], [3, 16], [16, 3], [16, 16]])
-        for [col, row], i in [[3, 3], [3, 16], [16, 3], [16, 16]]
-            break
+        for [col, row], i in [[3, 3], [16, 16]]
             dog = @entityManager.createEntityWithComponents([
                 ['EnemyComponent', {}]
                 ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
@@ -693,14 +692,14 @@ class LevelLoaderSystem extends System
                 ['ColorComponent', { color: 'red' }]
                 ['GridMovementComponent', { speed: (i+1) * 0.1 }]
                 ['CollidableComponent', {}]
-                ['AnimationComponent', { currentAction: 'idle-right', spritesheetUrl: 'dog.png', frameWidth: 112, frameHeight: 112, offsetX: 24, offsetY: 48 }]
+                ['AnimationComponent', { currentAction: 'idle-right', spritesheetUrl: 'dog.png', frameWidth: 176, frameHeight: 176, offsetX: 56, offsetY: 56 }]
                 ['AnimationActionComponent', {name: 'idle-right', row: 0, indices: [0], frameLength: 100 }]
                 ['AnimationActionComponent', {name: 'idle-left',  row: 1, indices: [0], frameLength: 100 }]
                 ['AnimationActionComponent', {name: 'idle-down',  row: 2, indices: [0], frameLength: 100 }]
                 ['AnimationActionComponent', {name: 'idle-up',    row: 3, indices: [0], frameLength: 100 }]
-                ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [0,1,2,1], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'walk-left',  row: 1, indices: [0,1,2,1], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'walk-down',  row: 2, indices: [0,1,2,1], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'walk-up',    row: 3, indices: [0,1,2,1], frameLength: 50 }]
+                ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [0,1,2,1], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'walk-left',  row: 1, indices: [0,1,2,1], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'walk-down',  row: 2, indices: [0,1,2,1], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'walk-up',    row: 3, indices: [0,1,2,1], frameLength: 100 }]
             ])
 

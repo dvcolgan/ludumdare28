@@ -54,3 +54,5 @@ todo:
     make the acorns animate when they catch fire (same with the trees)
 
     gust of wind with leaves showing where fire will spread
+
+    add lightning strikes for adding fire

@@ -1245,7 +1245,7 @@ LevelLoaderSystem = (function(_super) {
         acornsLeft.amount++;
       }
     }
-    _ref28 = [[9, 9]];
+    _ref28 = [[3, 16], [16, 3]];
     for (_n = 0, _len5 = _ref28.length; _n < _len5; _n++) {
       _ref29 = _ref28[_n], col = _ref29[0], row = _ref29[1];
       fireEnemy = this.entityManager.createEntityWithComponents([
@@ -1279,11 +1279,10 @@ LevelLoaderSystem = (function(_super) {
         ]
       ]);
     }
-    _ref30 = [[3, 3], [3, 16], [16, 3], [16, 16]];
+    _ref30 = [[3, 3], [16, 16]];
     _results = [];
     for (i = _o = 0, _len6 = _ref30.length; _o < _len6; i = ++_o) {
       _ref31 = _ref30[i], col = _ref31[0], row = _ref31[1];
-      break;
       _results.push(dog = this.entityManager.createEntityWithComponents([
         ['EnemyComponent', {}], [
           'GridPositionComponent', {
@@ -1312,10 +1311,10 @@ LevelLoaderSystem = (function(_super) {
           'AnimationComponent', {
             currentAction: 'idle-right',
             spritesheetUrl: 'dog.png',
-            frameWidth: 112,
-            frameHeight: 112,
-            offsetX: 24,
-            offsetY: 48
+            frameWidth: 176,
+            frameHeight: 176,
+            offsetX: 56,
+            offsetY: 56
           }
         ], [
           'AnimationActionComponent', {
@@ -1350,28 +1349,28 @@ LevelLoaderSystem = (function(_super) {
             name: 'walk-right',
             row: 0,
             indices: [0, 1, 2, 1],
-            frameLength: 50
+            frameLength: 100
           }
         ], [
           'AnimationActionComponent', {
             name: 'walk-left',
             row: 1,
             indices: [0, 1, 2, 1],
-            frameLength: 50
+            frameLength: 100
           }
         ], [
           'AnimationActionComponent', {
             name: 'walk-down',
             row: 2,
             indices: [0, 1, 2, 1],
-            frameLength: 50
+            frameLength: 100
           }
         ], [
           'AnimationActionComponent', {
             name: 'walk-up',
             row: 3,
             indices: [0, 1, 2, 1],
-            frameLength: 50
+            frameLength: 100
           }
         ]
       ]));
