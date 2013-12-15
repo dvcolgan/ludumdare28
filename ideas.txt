@@ -49,7 +49,7 @@ todo:
 
     add transitions
 
-    fix firefox
+    -fix firefox
 
     -add wasd
 

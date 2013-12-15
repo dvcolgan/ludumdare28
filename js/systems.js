@@ -562,6 +562,9 @@ TilemapRenderingSystem = (function(_super) {
               tileIdx = row * layer.tileData.width + col;
               if (col < layer.tileData.width && col >= 0 && row < layer.tileData.height && row >= 0) {
                 thisTile = layer.tileData.data[tileIdx] - 1;
+                if (thisTile < 0) {
+                  thisTile = 0;
+                }
                 thisTileImageX = (thisTile % tileImageTilesWide) * layer.tileWidth;
                 thisTileImageY = Math.floor(thisTile / tileImageTilesWide) * layer.tileHeight;
                 screenX = Math.floor(col * layer.tileWidth - cameraPosition.x);
@@ -896,6 +899,7 @@ AcornSystem = (function(_super) {
       if (acornPosition.col >= minScreenCol && acornPosition.col <= maxScreenCol && acornPosition.row >= minScreenRow && acornPosition.row <= maxScreenRow) {
         if (acornPosition.col === playerPosition.col && acornPosition.row === playerPosition.row) {
           this.entityManager.removeEntity(acornEntity);
+          window.soundManager.play('crunch.wav');
           score.score++;
           if (score.score === 1000) {
             lives.lives++;
@@ -943,10 +947,10 @@ ScoreRenderingSystem = (function(_super) {
     acornsWidth = this.cq.measureText('Acorns: ' + score.score).width;
     this.cq.roundRect(Game.SCREEN_WIDTH - acornsWidth - 20, -30, 300, 70, 25);
     this.cq.fill();
-    this.cq.font('30px "Merienda One"').textAlign('left').textBaseline('top').fillStyle('white');
-    this.cq.fillText('Lives: ' + lives.lives, 6, -2);
+    this.cq.font('30px "Merienda One"').textAlign('left').fillStyle('white');
+    this.cq.fillText('Lives: ' + lives.lives, 6, 30);
     this.cq.textAlign('right').fillStyle('white');
-    return this.cq.fillText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 6, -2);
+    return this.cq.fillText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 6, 30);
   };
 
   return ScoreRenderingSystem;
@@ -971,6 +975,7 @@ EnemyDamageSystem = (function(_super) {
       if (enemyPosition.col === playerPosition.col && enemyPosition.row === playerPosition.row) {
         _ref21 = this.entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent']), scoreEntity = _ref21[0], score = _ref21[1], lives = _ref21[2];
         lives.lives--;
+        window.soundManager.play('dog-eat.wav');
         if (lives.lives > 0) {
           playerPosition.col = 9;
           playerPosition.row = 11;
@@ -1219,7 +1224,6 @@ LevelLoaderSystem = (function(_super) {
             }
           ]
         ]);
-        break;
       }
     }
     _ref27 = [[3, 16], [16, 3]];

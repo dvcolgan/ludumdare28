@@ -285,6 +285,7 @@ class TilemapRenderingSystem extends System
                     if col < layer.tileData.width and col >= 0 and row < layer.tileData.height and row >= 0
 
                         thisTile = layer.tileData.data[tileIdx] - 1
+                        if thisTile < 0 then thisTile = 0
                         thisTileImageX = (thisTile % tileImageTilesWide) * layer.tileWidth
                         thisTileImageY = Math.floor(thisTile / tileImageTilesWide) * layer.tileHeight
                         screenX = Math.floor(col * layer.tileWidth - cameraPosition.x)
@@ -478,6 +479,7 @@ class AcornSystem extends System
 
                 if acornPosition.col == playerPosition.col and acornPosition.row == playerPosition.row
                     @entityManager.removeEntity(acornEntity)
+                    window.soundManager.play('crunch.wav')
                     score.score++
                     if score.score == 1000
                         lives.lives++
@@ -517,12 +519,12 @@ class ScoreRenderingSystem extends System
         @cq.roundRect(Game.SCREEN_WIDTH - acornsWidth - 20, -30, 300, 70, 25)
         @cq.fill()
 
-        @cq.font('30px "Merienda One"').textAlign('left').textBaseline('top').fillStyle('white')
-        @cq.fillText('Lives: ' + lives.lives, 6, -2)
+        @cq.font('30px "Merienda One"').textAlign('left').fillStyle('white')
+        @cq.fillText('Lives: ' + lives.lives, 6, 30)
         #@cq.lineWidth(1).strokeStyle('white').strokeText('Lives: ' + lives.lives, 6, -2)
 
         @cq.textAlign('right').fillStyle('white')
-        @cq.fillText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 6, -2)
+        @cq.fillText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 6, 30)
         #@cq.lineWidth(3).strokeStyle('black').strokeText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 10, -4)
 
 
@@ -535,6 +537,8 @@ class EnemyDamageSystem extends System
             if enemyPosition.col == playerPosition.col and enemyPosition.row == playerPosition.row
                 [scoreEntity, score, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent'])
                 lives.lives--
+                #window.soundManager.play('nom-nom-nom.wav')
+                window.soundManager.play('dog-eat.wav')
                 if lives.lives > 0
                     
                     # Reset game
@@ -660,7 +664,6 @@ class LevelLoaderSystem extends System
                     ['MultiStateSpriteComponent', { spriteUrl: 'acorn.png', frameWidth: 64, frameHeight: 64 }]
                     ['EyeHavingComponent', { offsetMax: 4, targetEntity: player, eyesImageUrl: 'acorn-eyes.png' }]
                 ])
-                break
 
         #for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
         for [col, row] in [[3,16], [16,3]]

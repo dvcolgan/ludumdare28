@@ -23,12 +23,16 @@ class TitleScreenState extends GameState
             ['PixelPositionComponent', { x: 0, y: 0 }]
         ])
         @staticSpriteRenderSystem = new StaticSpriteRenderSystem(@cq, @entityManager, @eventManager, @assetManager)
+        window.soundManager.stopAll()
+        window.soundManager.play('title-screen-music.ogg')
 
     render: (delta, time) ->
         @staticSpriteRenderSystem.draw()
 
     keyUp: (key) ->
         if key == 'space'
+            window.soundManager.stopAll()
+
             game.pushState(PlayState, {})
 
 
@@ -110,6 +114,7 @@ class PlayState extends GameState
 
     render: (delta, time) ->
         @cq.clear('white')
+        console.log 'here'
         @tilemapRenderingSystem.draw()
         @shapeRenderSystem.draw()
         @staticSpriteRenderSystem.draw()
@@ -139,13 +144,17 @@ class GameOverScreenState extends GameState
 
         @staticSpriteRenderSystem = new StaticSpriteRenderSystem(@cq, @entityManager, @eventManager, @assetManager)
 
+        window.soundManager.stopAll()
+        window.soundManager.play('game-over-music.ogg')
+
     render: (delta, time) ->
-        @cq.font('102px "Merienda One"').textAlign('center').textBaseline('top').fillStyle('black')
+        @cq.font('102px "Merienda One"').textAlign('center').fillStyle('black')
         @staticSpriteRenderSystem.draw()
-        @cq.fillText(@score, Game.SCREEN_WIDTH/2, 86)
+        @cq.fillText(@score, Game.SCREEN_WIDTH/2, 194)
 
     keyUp: (key) ->
         if key == 'space'
+            window.soundManager.stopAll()
             game.popState()
             game.popState()
             game.pushState(PlayState, {})
@@ -157,44 +166,55 @@ class Game
     @GRID_SIZE: 64
 
     constructor: ->
-        @cq = cq(Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT).appendTo('body')
-        @states = []
-        @currentState = null
-        @assetManager = new AssetManager()
 
-        @assetManager.loadImage('tiles.png')
-        @assetManager.loadImage('squirrel.png')
-        @assetManager.loadImage('acorn.png')
-        @assetManager.loadImage('acorn-eyes.png')
-        @assetManager.loadImage('fire.png')
-        @assetManager.loadImage('dog.png')
-        @assetManager.loadImage('title-screen.png')
-        @assetManager.loadImage('game-over-screen.png')
-        @assetManager.loadTilemap('level1.json')
-        @assetManager.loadTilemap('level2.json')
-        @assetManager.loadTilemap('level3.json')
-        @assetManager.loadTilemap('level3.json')
-        @assetManager.loadTilemap('testlevel.json')
+        soundManager.setup
+            url: 'js/lib/soundmanager/swf/soundmanager2.swf'
+            flashVersion: 9
+            waitForWindowLoad: true
+            useHighPerformance: true
+            onready: =>
 
-        @assetManager.start =>
-            @pushState(TitleScreenState)
+                @cq = cq(Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT).appendTo('body')
+                @states = []
+                @currentState = null
+                @assetManager = new AssetManager()
 
-            @cq.framework
-                onstep: (delta, time) =>
-                    if @currentState
-                        @currentState.step(delta, time)
+                @assetManager.loadImage('tiles.png')
+                @assetManager.loadImage('squirrel.png')
+                @assetManager.loadImage('acorn.png')
+                @assetManager.loadImage('acorn-eyes.png')
+                @assetManager.loadImage('fire.png')
+                @assetManager.loadImage('dog.png')
+                @assetManager.loadImage('title-screen.png')
+                @assetManager.loadImage('game-over-screen.png')
+                @assetManager.loadTilemap('level1.json')
+                @assetManager.loadTilemap('level2.json')
+                @assetManager.loadTilemap('level3.json')
+                @assetManager.loadSoundEffect('crunch.wav')
+                @assetManager.loadSoundEffect('nom-nom-nom.wav')
+                @assetManager.loadSoundEffect('dog-eat.wav')
+                @assetManager.loadBGM('title-screen-music.ogg')
+                @assetManager.loadBGM('game-over-music.ogg')
 
-                onrender: (delta, time) =>
-                    if @currentState
-                        @currentState.render(delta, time)
-                    
-                onkeydown: (key) =>
-                    if @currentState
-                        @currentState.keyDown(key)
+                @assetManager.start =>
+                    @pushState(TitleScreenState)
 
-                onkeyup: (key) =>
-                    if @currentState
-                        @currentState.keyUp(key)
+                    @cq.framework
+                        onstep: (delta, time) =>
+                            if @currentState
+                                @currentState.step(delta, time)
+
+                        onrender: (delta, time) =>
+                            if @currentState
+                                @currentState.render(delta, time)
+                            
+                        onkeydown: (key) =>
+                            if @currentState
+                                @currentState.keyDown(key)
+
+                        onkeyup: (key) =>
+                            if @currentState
+                                @currentState.keyUp(key)
 
     pushState: (stateClass, args) ->
         state = new stateClass(@cq, @assetManager, args)

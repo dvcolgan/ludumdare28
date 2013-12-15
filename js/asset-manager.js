@@ -8,7 +8,8 @@ AssetManager = (function() {
     this.audiosPrefix = 'audio/';
     this.imagesToLoad = [];
     this.tilemapsToLoad = [];
-    this.audiosToLoad = [];
+    this.soundEffectsToLoad = [];
+    this.bgmsToLoad = [];
     this.assets = {};
     this.remaining = 0;
   }
@@ -21,12 +22,16 @@ AssetManager = (function() {
     return this.tilemapsToLoad.push(url);
   };
 
-  AssetManager.prototype.loadAudio = function(url) {
-    return this.audiosToLoad.push(url);
+  AssetManager.prototype.loadSoundEffect = function(url) {
+    return this.soundEffectsToLoad.push(url);
+  };
+
+  AssetManager.prototype.loadBGM = function(url) {
+    return this.bgmsToLoad.push(url);
   };
 
   AssetManager.prototype.start = function(callback) {
-    var audio, audioUrl, img, imgUrl, tilemapUrl, _fn, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2,
+    var bgmUrl, img, imgUrl, soundEffectUrl, tilemapUrl, _fn, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3,
       _this = this;
     _ref = this.tilemapsToLoad;
     _fn = function(tilemapUrl) {
@@ -65,20 +70,43 @@ AssetManager = (function() {
       };
       this.assets[imgUrl] = img;
     }
-    _ref2 = this.audiosToLoad;
+    _ref2 = this.bgmsToLoad;
     for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-      audioUrl = _ref2[_k];
-      audio = new Audio();
-      audio.addEventListener('canplaythrough', (function() {
-        console.log('loaded audio');
-        _this.remaining--;
-        if (_this.remaining === 0) {
-          return callback();
-        }
-      }), false);
-      audio.src = this.audiosPrefix + audioUrl;
+      bgmUrl = _ref2[_k];
       this.remaining++;
-      this.assets[audioUrl] = audio;
+      window.soundManager.createSound({
+        volume: 100,
+        autoLoad: true,
+        loops: 10000,
+        id: bgmUrl,
+        url: this.audiosPrefix + bgmUrl,
+        onload: function() {
+          console.log('loaded audio');
+          _this.remaining--;
+          if (_this.remaining === 0) {
+            return callback();
+          }
+        }
+      });
+    }
+    _ref3 = this.soundEffectsToLoad;
+    for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+      soundEffectUrl = _ref3[_l];
+      this.remaining++;
+      window.soundManager.createSound({
+        volume: 100,
+        autoLoad: true,
+        multiShot: true,
+        id: soundEffectUrl,
+        url: this.audiosPrefix + soundEffectUrl,
+        onload: function() {
+          console.log('loaded audio');
+          _this.remaining--;
+          if (_this.remaining === 0) {
+            return callback();
+          }
+        }
+      });
     }
     if (Object.keys(this.assets).length === 0) {
       return callback();

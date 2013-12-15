@@ -60,7 +60,9 @@ TitleScreenState = (function(_super) {
         }
       ]
     ]);
-    return this.staticSpriteRenderSystem = new StaticSpriteRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.staticSpriteRenderSystem = new StaticSpriteRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    window.soundManager.stopAll();
+    return window.soundManager.play('title-screen-music.ogg');
   };
 
   TitleScreenState.prototype.render = function(delta, time) {
@@ -69,6 +71,7 @@ TitleScreenState = (function(_super) {
 
   TitleScreenState.prototype.keyUp = function(key) {
     if (key === 'space') {
+      window.soundManager.stopAll();
       return game.pushState(PlayState, {});
     }
   };
@@ -240,6 +243,7 @@ PlayState = (function(_super) {
 
   PlayState.prototype.render = function(delta, time) {
     this.cq.clear('white');
+    console.log('here');
     this.tilemapRenderingSystem.draw();
     this.shapeRenderSystem.draw();
     this.staticSpriteRenderSystem.draw();
@@ -292,17 +296,20 @@ GameOverScreenState = (function(_super) {
       ]
     ]);
     this.score = args.finalScore;
-    return this.staticSpriteRenderSystem = new StaticSpriteRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    this.staticSpriteRenderSystem = new StaticSpriteRenderSystem(this.cq, this.entityManager, this.eventManager, this.assetManager);
+    window.soundManager.stopAll();
+    return window.soundManager.play('game-over-music.ogg');
   };
 
   GameOverScreenState.prototype.render = function(delta, time) {
-    this.cq.font('102px "Merienda One"').textAlign('center').textBaseline('top').fillStyle('black');
+    this.cq.font('102px "Merienda One"').textAlign('center').fillStyle('black');
     this.staticSpriteRenderSystem.draw();
-    return this.cq.fillText(this.score, Game.SCREEN_WIDTH / 2, 86);
+    return this.cq.fillText(this.score, Game.SCREEN_WIDTH / 2, 194);
   };
 
   GameOverScreenState.prototype.keyUp = function(key) {
     if (key === 'space') {
+      window.soundManager.stopAll();
       game.popState();
       game.popState();
       return game.pushState(PlayState, {});
@@ -322,47 +329,58 @@ Game = (function() {
 
   function Game() {
     var _this = this;
-    this.cq = cq(Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT).appendTo('body');
-    this.states = [];
-    this.currentState = null;
-    this.assetManager = new AssetManager();
-    this.assetManager.loadImage('tiles.png');
-    this.assetManager.loadImage('squirrel.png');
-    this.assetManager.loadImage('acorn.png');
-    this.assetManager.loadImage('acorn-eyes.png');
-    this.assetManager.loadImage('fire.png');
-    this.assetManager.loadImage('dog.png');
-    this.assetManager.loadImage('title-screen.png');
-    this.assetManager.loadImage('game-over-screen.png');
-    this.assetManager.loadTilemap('level1.json');
-    this.assetManager.loadTilemap('level2.json');
-    this.assetManager.loadTilemap('level3.json');
-    this.assetManager.loadTilemap('level3.json');
-    this.assetManager.loadTilemap('testlevel.json');
-    this.assetManager.start(function() {
-      _this.pushState(TitleScreenState);
-      return _this.cq.framework({
-        onstep: function(delta, time) {
-          if (_this.currentState) {
-            return _this.currentState.step(delta, time);
-          }
-        },
-        onrender: function(delta, time) {
-          if (_this.currentState) {
-            return _this.currentState.render(delta, time);
-          }
-        },
-        onkeydown: function(key) {
-          if (_this.currentState) {
-            return _this.currentState.keyDown(key);
-          }
-        },
-        onkeyup: function(key) {
-          if (_this.currentState) {
-            return _this.currentState.keyUp(key);
-          }
-        }
-      });
+    soundManager.setup({
+      url: 'js/lib/soundmanager/swf/soundmanager2.swf',
+      flashVersion: 9,
+      waitForWindowLoad: true,
+      useHighPerformance: true,
+      onready: function() {
+        _this.cq = cq(Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT).appendTo('body');
+        _this.states = [];
+        _this.currentState = null;
+        _this.assetManager = new AssetManager();
+        _this.assetManager.loadImage('tiles.png');
+        _this.assetManager.loadImage('squirrel.png');
+        _this.assetManager.loadImage('acorn.png');
+        _this.assetManager.loadImage('acorn-eyes.png');
+        _this.assetManager.loadImage('fire.png');
+        _this.assetManager.loadImage('dog.png');
+        _this.assetManager.loadImage('title-screen.png');
+        _this.assetManager.loadImage('game-over-screen.png');
+        _this.assetManager.loadTilemap('level1.json');
+        _this.assetManager.loadTilemap('level2.json');
+        _this.assetManager.loadTilemap('level3.json');
+        _this.assetManager.loadSoundEffect('crunch.wav');
+        _this.assetManager.loadSoundEffect('nom-nom-nom.wav');
+        _this.assetManager.loadSoundEffect('dog-eat.wav');
+        _this.assetManager.loadBGM('title-screen-music.ogg');
+        _this.assetManager.loadBGM('game-over-music.ogg');
+        return _this.assetManager.start(function() {
+          _this.pushState(TitleScreenState);
+          return _this.cq.framework({
+            onstep: function(delta, time) {
+              if (_this.currentState) {
+                return _this.currentState.step(delta, time);
+              }
+            },
+            onrender: function(delta, time) {
+              if (_this.currentState) {
+                return _this.currentState.render(delta, time);
+              }
+            },
+            onkeydown: function(key) {
+              if (_this.currentState) {
+                return _this.currentState.keyDown(key);
+              }
+            },
+            onkeyup: function(key) {
+              if (_this.currentState) {
+                return _this.currentState.keyUp(key);
+              }
+            }
+          });
+        });
+      }
     });
   }
 

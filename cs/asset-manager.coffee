@@ -5,7 +5,8 @@ class AssetManager
         @audiosPrefix = 'audio/'
         @imagesToLoad = []
         @tilemapsToLoad = []
-        @audiosToLoad = []
+        @soundEffectsToLoad = []
+        @bgmsToLoad = []
         @assets = {}
         @remaining = 0
 
@@ -15,8 +16,10 @@ class AssetManager
     loadTilemap: (url) ->
         @tilemapsToLoad.push(url)
 
-    loadAudio: (url) ->
-        @audiosToLoad.push(url)
+    loadSoundEffect: (url) ->
+        @soundEffectsToLoad.push(url)
+    loadBGM: (url) ->
+        @bgmsToLoad.push(url)
 
     start: (callback) ->
         for tilemapUrl in @tilemapsToLoad
@@ -45,17 +48,45 @@ class AssetManager
                     callback()
             @assets[imgUrl] = img
 
-        for audioUrl in @audiosToLoad
-            audio = new Audio()
-            audio.addEventListener('canplaythrough', (=>
-                console.log 'loaded audio'
-                @remaining--
-                if @remaining == 0
-                    callback()
-            ), false)
-            audio.src = @audiosPrefix + audioUrl
+            #for audioUrl in @audiosToLoad
+            #for audio = new Audio()
+            #for audio.addEventListener('canplaythrough', (=>
+            #for     console.log 'loaded audio'
+            #for     @remaining--
+            #for     if @remaining == 0
+            #for         callback()
+            #for ), false)
+            #for audio.src = @audiosPrefix + audioUrl
+            #for @remaining++
+            #for @assets[audioUrl] = audio
+        
+        for bgmUrl in @bgmsToLoad
             @remaining++
-            @assets[audioUrl] = audio
+            window.soundManager.createSound
+                volume: 100
+                autoLoad: true
+                loops: 10000
+                id: bgmUrl
+                url: @audiosPrefix + bgmUrl
+                onload: =>
+                    console.log 'loaded audio'
+                    @remaining--
+                    if @remaining == 0
+                        callback()
+
+        for soundEffectUrl in @soundEffectsToLoad
+            @remaining++
+            window.soundManager.createSound
+                volume: 100
+                autoLoad: true
+                multiShot: true
+                id: soundEffectUrl
+                url: @audiosPrefix + soundEffectUrl
+                onload: =>
+                    console.log 'loaded audio'
+                    @remaining--
+                    if @remaining == 0
+                        callback()
 
         if Object.keys(@assets).length == 0 then callback()
 
