@@ -36,6 +36,7 @@ todo:
     -pathfinding use astar.js
 
     human laying fire
+    make the ground grass instead of doritos
 
     game over screen where it shows the total number of acorns you got
 

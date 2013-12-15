@@ -135,3 +135,10 @@ window.components =
 
     LivesComponent:
         lives: 3
+
+    CurrentLevelComponent:
+        level: 1
+
+    SpreadingFireComponent:
+        strength: 0
+        chance: 0.01

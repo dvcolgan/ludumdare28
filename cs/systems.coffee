@@ -35,12 +35,12 @@ class GridMovementSystem extends System
                     if dy < 0 then direction.direction = 'up'
                     if dy > 0 then direction.direction = 'down'
 
-                    for [noop, collisionLayer] in @entityManager.iterateEntitiesAndComponents(['TilemapCollisionLayerComponent'])
+                    for [__, collisionLayer] in @entityManager.iterateEntitiesAndComponents(['TilemapCollisionLayerComponent'])
                         tileIdx = (gridPosition.row+dy) * collisionLayer.tileData.width + (gridPosition.col+dx)
                         nextTile = collisionLayer.tileData.data[tileIdx]
                         if nextTile == 0
                             #canMove = true
-                            #for [noop, otherGridPosition, _] in @entityManager.iterateEntitiesAndComponents(['GridPositionComponent', 'CollidableComponent'])
+                            #for [__, otherGridPosition, _] in @entityManager.iterateEntitiesAndComponents(['GridPositionComponent', 'CollidableComponent'])
                             #    if (gridPosition.col+dx) == otherGridPosition.col and (gridPosition.row+dy) == otherGridPosition.row
                             #        canMove = false
                             #if canMove
@@ -103,7 +103,7 @@ class TweenSystem extends System
 class ShapeRenderSystem extends System
 
     draw: ->
-        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         for [entity, position, color, shape, direction] in @entityManager.iterateEntitiesAndComponents(['PixelPositionComponent', 'ColorComponent', 'ShapeRendererComponent', 'DirectionComponent'])
             @cq.fillStyle(color.color)
@@ -133,7 +133,7 @@ class ShapeRenderSystem extends System
 
 class InputSystem extends System
     updateKey: (key, value) ->
-        for [entity, noop, input] in @entityManager.iterateEntitiesAndComponents(['KeyboardArrowsInputComponent', 'ActionInputComponent'])
+        for [entity, __, input] in @entityManager.iterateEntitiesAndComponents(['KeyboardArrowsInputComponent', 'ActionInputComponent'])
             if input.enabled or value == off
                 if value == off
                     if key == 'left'  then input.left = off
@@ -164,7 +164,7 @@ class InputSystem extends System
 # TODO make this generic for any key using a nice hash table
 class RandomInputSystem extends System
     update: (delta) ->
-        for [entity, noop, input] in @entityManager.iterateEntitiesAndComponents(['RandomArrowsInputComponent', 'ActionInputComponent'])
+        for [entity, __, input] in @entityManager.iterateEntitiesAndComponents(['RandomArrowsInputComponent', 'ActionInputComponent'])
             input.left = input.right = input.up = input.down = false
             chance = 0.002
             if Math.random() < chance
@@ -183,8 +183,8 @@ class RandomInputSystem extends System
 
 class AstarInputSystem extends System
     update: (delta) ->
-        [player, noop, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
-        for [entity, noop, noop, input, enemyPosition] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'AstarInputComponent', 'ActionInputComponent', 'GridPositionComponent'])
+        [player, __, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
+        for [entity, __, __, input, enemyPosition] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'AstarInputComponent', 'ActionInputComponent', 'GridPositionComponent'])
             input.left = input.right = input.up = input.down = false
 
             if enemyPosition.justEntered
@@ -237,28 +237,30 @@ class MovementSystem extends System
 
 class CameraFollowingSystem extends System
     update: (delta) ->
-        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
-        [followee, noop, followeePosition] = @entityManager.getFirstEntityAndComponents(['CameraFollowsComponent', 'PixelPositionComponent'])
+        [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [followee, __, followeePosition] = @entityManager.getFirstEntityAndComponents(['CameraFollowsComponent', 'PixelPositionComponent'])
 
         [mapLayer, mapLayerComponent] = @entityManager.getFirstEntityAndComponents(['TilemapVisibleLayerComponent'])
 
-        mapWidth = mapLayerComponent.tileWidth * mapLayerComponent.tileData.width
-        mapHeight = mapLayerComponent.tileHeight * mapLayerComponent.tileData.height
+        if camera and followee and mapLayer
 
-        targetX = followeePosition.x - (Game.SCREEN_WIDTH / 2)
-        targetY = followeePosition.y - (Game.SCREEN_HEIGHT / 2)
+            mapWidth = mapLayerComponent.tileWidth * mapLayerComponent.tileData.width
+            mapHeight = mapLayerComponent.tileHeight * mapLayerComponent.tileData.height
 
-        cameraPosition.x += (targetX - cameraPosition.x) * 0.1
-        cameraPosition.y += (targetY - cameraPosition.y) * 0.1
+            targetX = followeePosition.x - (Game.SCREEN_WIDTH / 2)
+            targetY = followeePosition.y - (Game.SCREEN_HEIGHT / 2)
 
-        cameraPosition.x = cameraPosition.x.clamp(0, mapWidth - Game.SCREEN_WIDTH)
-        cameraPosition.y = cameraPosition.y.clamp(0, mapHeight - Game.SCREEN_HEIGHT)
+            cameraPosition.x += (targetX - cameraPosition.x) * 0.1
+            cameraPosition.y += (targetY - cameraPosition.y) * 0.1
+
+            cameraPosition.x = cameraPosition.x.clamp(0, mapWidth - Game.SCREEN_WIDTH)
+            cameraPosition.y = cameraPosition.y.clamp(0, mapHeight - Game.SCREEN_HEIGHT)
 
 
 class TilemapRenderingSystem extends System
 
     draw: (delta) ->
-        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         entities = @entityManager.getEntitiesHavingComponent('TilemapVisibleLayerComponent')
         layers = []
@@ -300,7 +302,7 @@ class TilemapRenderingSystem extends System
 
 class DialogRenderingSystem extends System
     update: (delta) ->
-        [playerEntity, noop, playerGridPosition, playerDirection, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent', 'DirectionComponent', 'ActionInputComponent'])
+        [playerEntity, __, playerGridPosition, playerDirection, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent', 'DirectionComponent', 'ActionInputComponent'])
         if playerInput.enabled
             if playerInput.action == 'hit'
                 for [otherEntity, otherDirection, otherGridPosition, ] in @entityManager.iterateEntitiesAndComponents(['DirectionComponent', 'GridPositionComponent'])
@@ -329,7 +331,7 @@ class DialogRenderingSystem extends System
             if dialogInput.action == 'hit'
                 dialogInput.enabled = no
                 dialogBox.visible = false
-                [playerEntity, noop, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'ActionInputComponent'])
+                [playerEntity, __, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'ActionInputComponent'])
                 playerInput.enabled = yes
                 talkeeInput = @entityManager.getComponent(dialogBox.talkee, 'ActionInputComponent')
                 if talkeeInput then talkeeInput.enabled = yes
@@ -337,7 +339,7 @@ class DialogRenderingSystem extends System
             
 
     draw: (delta) ->
-        [noop, dialogBox, dialogBoxText] = @entityManager.getFirstEntityAndComponents(['DialogBoxComponent', 'DialogBoxTextComponent'])
+        [__, dialogBox, dialogBoxText] = @entityManager.getFirstEntityAndComponents(['DialogBoxComponent', 'DialogBoxTextComponent'])
         
         if dialogBox.visible
             @cq.font('16px "Press Start 2P"').textBaseline('top').fillStyle('black')
@@ -376,7 +378,7 @@ class AnimatedSpriteSystem extends System
                     break
 
     draw: ->
-        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         for [animationEntity, animation, animationPosition] in @entityManager.iterateEntitiesAndComponents(['AnimationComponent', 'PixelPositionComponent'])
 
@@ -400,7 +402,7 @@ class AnimatedSpriteSystem extends System
 
 class StaticSpriteRenderSystem extends System
     draw: ->
-        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
 
         for [spriteEntity, sprite, position] in @entityManager.iterateEntitiesAndComponents(['StaticSpriteComponent', 'PixelPositionComponent'])
             screenX = Math.floor(position.x - cameraPosition.x)
@@ -410,7 +412,7 @@ class StaticSpriteRenderSystem extends System
 
 class EyeFollowingSystem extends System
     draw: ->
-        [camera, noop, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
+        [camera, __, cameraPosition] = @entityManager.getFirstEntityAndComponents(['CameraComponent', 'PixelPositionComponent'])
         for [eyeEntity, eyes, eyeHaverPosition] in @entityManager.iterateEntitiesAndComponents(['EyeHavingComponent', 'PixelPositionComponent'])
             #TODO cull the acorns offscreen
             targetPosition = @entityManager.getComponent(eyes.targetEntity, 'PixelPositionComponent')
@@ -438,16 +440,16 @@ class EyeFollowingSystem extends System
 
 class AcornSystem extends System
     update: (delta) ->
-        [player, noop, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
+        [player, __, playerPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent'])
         [scoreEntity, score, acornsLeft] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'AcornsLeftComponent'])
 
         for [acornEntity, acorn, acornPosition] in @entityManager.iterateEntitiesAndComponents(['AcornComponent', 'GridPositionComponent'])
             if acornPosition.col == playerPosition.col and acornPosition.row == playerPosition.row
                 @entityManager.removeEntity(acornEntity)
                 score.score++
-                acornsLeft--
-                if acornsLeft == 0
-                    console.log 'WINNER'
+                acornsLeft.amount--
+                if acornsLeft.amount == 0
+                    @eventManager.trigger('next-level', player)
 
 
 class ScoreRenderingSystem extends System
@@ -469,4 +471,138 @@ class ScoreRenderingSystem extends System
         @cq.textAlign('right').fillStyle('white')
         @cq.fillText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 6, -2)
         #@cq.lineWidth(3).strokeStyle('black').strokeText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 10, -4)
+
+
+class EnemyDamageSystem extends System
+    update: (delta) ->
+
+        [player, __, playerPosition, playerPixelPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent', 'PixelPositionComponent'])
+
+        for [enemy, __, enemyPosition] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'GridPositionComponent'])
+            if enemyPosition.col == playerPosition.col and enemyPosition.row == playerPosition.row
+                console.log 'HIT'
+
+                [scoreEntity, score, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent'])
+                lives.lives--
+                if lives.lives > 0
+                    
+                    # Reset game
+                    playerPosition.col = 9
+                    playerPosition.row = 11
+                    playerPixelPosition.x = 9 * Game.GRID_SIZE
+                    playerPixelPosition.y = 11 * Game.GRID_SIZE
+
+                    enemyPosition.justEntered = yes
+
+                else
+                    game.pushState(GameOverScreenState, { finalScore: score.score })
+
+
+class FireSpreadingSystem extends System
+    update: (delta) ->
+        for [fire, spreading] in @entityManager.iterateEntitiesAndComponents(['SpreadingFireComponent'])
+            if Math.random() < spreading.chance
+                true
+
+
+
+class LevelLoaderSystem extends System
+    constructor: (@cq, @entityManager, @eventManager, @assetManager) ->
+        console.log 'here'
+        [player, __] = @entityManager.getFirstEntityAndComponents(['PlayerComponent'])
+        @eventManager.subscribe 'next-level', player, =>
+            [__, level] = @entityManager.getFirstEntityAndComponents(['CurrentLevelComponent'])
+            level.level++
+
+            # Cycle through the three levels
+            levelIdx = ((level.level-1) % 3) + 1
+            @loadLevel('level' + levelIdx + '.json')
+        
+    loadLevel: (tileDataUrl) ->
+        console.log tileDataUrl
+
+        # Clear out old layers
+        oldEntities = []
+        for [enemyEntity, __] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent'])
+            oldEntities.push(enemyEntity)
+        for [layerEntity, __] in @entityManager.iterateEntitiesAndComponents(['TilemapVisibleLayerComponent'])
+            oldEntities.push(layerEntity)
+        for [collisionEntity, __] in @entityManager.iterateEntitiesAndComponents(['TilemapCollisionLayerComponent'])
+            oldEntities.push(collisionEntity)
+        for entity in oldEntities
+            @entityManager.removeEntity(entity)
+
+        # Set up map
+        mapData = @assetManager.assets[tileDataUrl]
+
+        background = mapData.layers[0]
+        objects = mapData.layers[1]
+
+        backgroundLayer = @entityManager.createEntityWithComponents([
+            ['TilemapVisibleLayerComponent', { tileData: background, tileImageUrl: 'tiles.png', tileWidth: 64, tileHeight: 64, zIndex: 0 }]
+        ])
+        objectsLayer = @entityManager.createEntityWithComponents([
+            ['TilemapVisibleLayerComponent', { tileData: objects, tileImageUrl: 'tiles.png', tileWidth: 64, tileHeight: 64, zIndex: 1 }]
+        ])
+        collisionLayer = @entityManager.createEntityWithComponents([
+            ['TilemapCollisionLayerComponent', { tileData: objects }]
+        ])
+
+        # Position the player
+        [player, __, playerPixelPosition, playerGridPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent', 'GridPositionComponent'])
+        playerGridPosition.col = 9
+        playerGridPosition.row = 11
+        playerPixelPosition.x = 9 * Game.GRID_SIZE
+        playerPixelPosition.y = 11 * Game.GRID_SIZE
+
+        # Set up acorns
+        [__, acornsLeft] = @entityManager.getFirstEntityAndComponents(['AcornsLeftComponent'])
+        acornsLeft.amount = 0
+        for tile, idx in objects.data
+            if tile == 0
+                col = (idx % objects.width)
+                row = Math.floor(idx / objects.width)
+                acorn = @entityManager.createEntityWithComponents([
+                    ['AcornComponent', {}]
+                    ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
+                    ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
+                    ['StaticSpriteComponent', { spriteUrl: 'acorn.png' }]
+                    ['EyeHavingComponent', { offsetMax: 4, targetEntity: player, eyesImageUrl: 'acorn-eyes.png' }]
+                ])
+                acornsLeft.amount++
+
+        for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
+            fireEnemy = @entityManager.createEntityWithComponents([
+                ['EnemyComponent', {}]
+                ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
+                ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
+                ['GridMovementComponent', { speed: 0.35 }]
+                ['CollidableComponent', {}]
+                ['AnimationComponent', { currentAction: 'fire', spritesheetUrl: 'fire.png', frameWidth: 64, frameHeight: 76, offsetX: 0, offsetY: 12 }]
+                ['AnimationActionComponent', {name: 'fire', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
+            ])
+
+
+        #[col, row] = _.sample([[3, 3], [3, 16], [16, 3], [16, 16]])
+        for [col, row], i in [[3, 3], [3, 16], [16, 3], [16, 16]]
+            dog = @entityManager.createEntityWithComponents([
+                ['EnemyComponent', {}]
+                ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
+                ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
+                ['DirectionComponent', { direction: 'right'}]
+                ['ActionInputComponent', {}]
+                ['AstarInputComponent', {}]
+                ['ColorComponent', { color: 'red' }]
+                ['GridMovementComponent', { speed: (i+1) * 0.1 }]
+                ['CollidableComponent', {}]
+                ['AnimationComponent', { currentAction: 'idle-right', spritesheetUrl: 'dog.png', frameWidth: 112, frameHeight: 112, offsetX: 24, offsetY: 48 }]
+                ['AnimationActionComponent', {name: 'idle-right', row: 0, indices: [0], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'idle-left',  row: 1, indices: [0], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'idle-down',  row: 2, indices: [0], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'idle-up',    row: 3, indices: [0], frameLength: 100 }]
+                ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [0,1,2,1], frameLength: 50 }]
+                ['AnimationActionComponent', {name: 'walk-left',  row: 1, indices: [0,1,2,1], frameLength: 50 }]
+                ['AnimationActionComponent', {name: 'walk-down',  row: 2, indices: [0,1,2,1], frameLength: 50 }]
+                ['AnimationActionComponent', {name: 'walk-up',    row: 3, indices: [0,1,2,1], frameLength: 50 }]
+            ])
 

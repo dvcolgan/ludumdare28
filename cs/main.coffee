@@ -1,34 +1,41 @@
 class GameState
-    constructor: (@cq, @assetManager) ->
+    constructor: (@cq, @assetManager, args) ->
         @eventManager = new EventManager()
         @entityManager = new EntityManager(window.components)
-        @create()
-
-    start: ->
-        @cq.framework
-            onstep: (delta, time) =>
-                @step(delta, time)
-
-            onrender: (delta, time) =>
-                @render(delta, time)
-                
-            onkeydown: (key) =>
-                @keyDown(key)
-
-            onkeyup: (key) =>
-                @keyUp(key)
+        @create(args)
 
     loadAssets: ->
-    create: ->
+    create: (args) ->
+    start: ->
     step: (delta, time) ->
     render: (delta, time) ->
     keyUp: (key) ->
     keyDown: (key) ->
 
+class TitleScreenState extends GameState
+    create: (args) ->
+        background = @entityManager.createEntityWithComponents([
+            ['PixelPositionComponent', { x: 0, y: 0 }]
+            ['StaticSpriteComponent', { spriteUrl: 'title-screen.png' }]
+        ])
+        camera = @entityManager.createEntityWithComponents([
+            ['CameraComponent', {}]
+            ['PixelPositionComponent', { x: 0, y: 0 }]
+        ])
+        @staticSpriteRenderSystem = new StaticSpriteRenderSystem(@cq, @entityManager, @eventManager, @assetManager)
 
-class OverworldState extends GameState
+    render: (delta, time) ->
+        @staticSpriteRenderSystem.draw()
 
-    create: ->
+    keyUp: (key) ->
+        if key == 'space'
+            game.pushState(PlayState, {})
+
+
+
+class PlayState extends GameState
+
+    create: (args) ->
         col = 5
         row = 5
         player = @entityManager.createEntityWithComponents([
@@ -63,9 +70,8 @@ class OverworldState extends GameState
             ['ScoreComponent', { score: 0 }]
             ['AcornsLeftComponent', { amount: 0 }]
             ['LivesComponent', { lives: 3 }]
+            ['CurrentLevelComponent', { level: 0 }]
         ])
-
-        @loadLevel('level1.json')
 
         @gridMovementSystem = new GridMovementSystem(@cq, @entityManager, @eventManager, @assetManager)
         @tweenSystem = new TweenSystem(@cq, @entityManager, @eventManager, @assetManager)
@@ -81,103 +87,15 @@ class OverworldState extends GameState
         @acornSystem = new AcornSystem(@cq, @entityManager, @eventManager, @assetManager)
         @astarInputSystem = new AstarInputSystem(@cq, @entityManager, @eventManager, @assetManager)
         @scoreRenderingSystem = new ScoreRenderingSystem(@cq, @entityManager, @eventManager, @assetManager)
-        
+        @enemyDamageSystem = new EnemyDamageSystem(@cq, @entityManager, @eventManager, @assetManager)
+        @levelLoaderSystem = new LevelLoaderSystem(@cq, @entityManager, @eventManager, @assetManager)
 
-    loadLevel: (tileDataUrl) ->
 
-        # Clear out old layers
-        oldLayers = []
-        for [layerEntity, noop] in @entityManager.iterateEntitiesAndComponents(['TilemapVisibleLayerComponent'])
-            oldLayers.push(layerEntity)
-        for [collisionEntity, noop] in @entityManager.iterateEntitiesAndComponents(['TilemapCollisionLayerComponent'])
-            oldLayers.push(collisionEntity)
-        for entity in oldLayers
-            @entityManager.removeEntity(entity)
-
-        # Set up map
-        mapData = @assetManager.assets[tileDataUrl]
-
-        background = mapData.layers[0]
-        objects = mapData.layers[1]
-
-        backgroundLayer = @entityManager.createEntityWithComponents([
-            ['TilemapVisibleLayerComponent', { tileData: background, tileImageUrl: 'tiles.png', tileWidth: 64, tileHeight: 64, zIndex: 0 }]
-        ])
-        objectsLayer = @entityManager.createEntityWithComponents([
-            ['TilemapVisibleLayerComponent', { tileData: objects, tileImageUrl: 'tiles.png', tileWidth: 64, tileHeight: 64, zIndex: 1 }]
-        ])
-        collisionLayer = @entityManager.createEntityWithComponents([
-            ['TilemapCollisionLayerComponent', { tileData: objects }]
-        ])
-
-        # Position the player
-        [player, noop, playerPixelPosition, playerGridPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent', 'GridPositionComponent'])
-        playerGridPosition.col = 9
-        playerGridPosition.row = 11
-        playerPixelPosition.x = 9 * Game.GRID_SIZE
-        playerPixelPosition.y = 11 * Game.GRID_SIZE
-
-        # Set up acorns
-        [noop, acornsLeft] = @entityManager.getFirstEntityAndComponents(['AcornsLeftComponent'])
-        acornsLeft.amount = 0
-        for tile, idx in objects.data
-            if tile == 0
-                col = (idx % objects.width)
-                row = Math.floor(idx / objects.width)
-                acorn = @entityManager.createEntityWithComponents([
-                    ['AcornComponent', {}]
-                    ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
-                    ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
-                    ['StaticSpriteComponent', { spriteUrl: 'acorn.png' }]
-                    ['EyeHavingComponent', { offsetMax: 4, targetEntity: player, eyesImageUrl: 'acorn-eyes.png' }]
-                ])
-                acornsLeft.amount++
-
-        for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
-            fireEnemy = @entityManager.createEntityWithComponents([
-                ['EnemyComponent', {}]
-                ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
-                ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
-                ['DirectionComponent', { direction: 'right'}]
-                ['ActionInputComponent', {}]
-                ['RandomArrowsInputComponent', {}]
-                ['GridMovementComponent', { speed: 0.35 }]
-                ['CollidableComponent', {}]
-                ['AnimationComponent', { currentAction: 'idle-right', spritesheetUrl: 'fire.png', frameWidth: 64, frameHeight: 76, offsetX: 0, offsetY: 12 }]
-                ['AnimationActionComponent', {name: 'idle-right', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'idle-left', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'idle-up', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'idle-down', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'walk-left', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'walk-up', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-                ['AnimationActionComponent', {name: 'walk-down', row: 0, indices: [ 0,1,2,1,3,3,3,0,3,2,0,2,2,1,0,3,1,3,2,0,3,0,0,0,1,1,1,1,1,3,2,0,2,0,1,1,3,3,0,0,1,3,0,3,0,1,1,2,0,3], frameLength: 50 }]
-            ])
-
-        [col, row] = _.sample([[3, 3], [3, 16], [16, 3], [16, 16]])
-        dog = @entityManager.createEntityWithComponents([
-            ['EnemyComponent', {}]
-            ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
-            ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
-            ['DirectionComponent', { direction: 'right'}]
-            ['ActionInputComponent', {}]
-            ['AstarInputComponent', {}]
-            ['ColorComponent', { color: 'red' }]
-            ['GridMovementComponent', { speed: 0.2 }]
-            ['CollidableComponent', {}]
-            ['AnimationComponent', { currentAction: 'idle-right', spritesheetUrl: 'dog.png', frameWidth: 112, frameHeight: 112, offsetX: 24, offsetY: 48 }]
-            ['AnimationActionComponent', {name: 'idle-right', row: 0, indices: [0], frameLength: 100 }]
-            ['AnimationActionComponent', {name: 'idle-left',  row: 1, indices: [0], frameLength: 100 }]
-            ['AnimationActionComponent', {name: 'idle-down',  row: 2, indices: [0], frameLength: 100 }]
-            ['AnimationActionComponent', {name: 'idle-up',    row: 3, indices: [0], frameLength: 100 }]
-            ['AnimationActionComponent', {name: 'walk-right', row: 0, indices: [0,1,2,1], frameLength: 50 }]
-            ['AnimationActionComponent', {name: 'walk-left',  row: 1, indices: [0,1,2,1], frameLength: 50 }]
-            ['AnimationActionComponent', {name: 'walk-down',  row: 2, indices: [0,1,2,1], frameLength: 50 }]
-            ['AnimationActionComponent', {name: 'walk-up',    row: 3, indices: [0,1,2,1], frameLength: 50 }]
-        ])
+        @eventManager.trigger('next-level', player)
 
 
     step: (delta, time) ->
+        @eventManager.pump()
         @astarInputSystem.update(delta, time)
         @gridMovementSystem.update(delta, time)
         @tweenSystem.update(delta, time)
@@ -186,6 +104,7 @@ class OverworldState extends GameState
         @animatedSpriteSystem.update(delta, time)
         @animationDirectionSyncSystem.update(delta, time)
         @cameraFollowingSystem.update(delta, time)
+        @enemyDamageSystem.update(delta, time)
 
     render: (delta, time) ->
         @cq.clear('white')
@@ -203,14 +122,41 @@ class OverworldState extends GameState
         @inputSystem.updateKey(key, on)
 
 
+class GameOverScreenState extends GameState
+    create: (args) ->
+        background = @entityManager.createEntityWithComponents([
+            ['PixelPositionComponent', { x: 0, y: 0 }]
+            ['StaticSpriteComponent', { spriteUrl: 'game-over-screen.png' }]
+        ])
+        camera = @entityManager.createEntityWithComponents([
+            ['CameraComponent', {}]
+            ['PixelPositionComponent', { x: 0, y: 0 }]
+        ])
+        @score = args.finalScore
+
+        @staticSpriteRenderSystem = new StaticSpriteRenderSystem(@cq, @entityManager, @eventManager, @assetManager)
+
+    render: (delta, time) ->
+        @cq.font('102px "Merienda One"').textAlign('center').textBaseline('top').fillStyle('black')
+        @staticSpriteRenderSystem.draw()
+        @cq.fillText(@score, Game.SCREEN_WIDTH/2, 86)
+
+    keyUp: (key) ->
+        if key == 'space'
+            game.popState()
+            game.popState()
+            game.pushState(PlayState, {})
+
+
 class Game
     @SCREEN_WIDTH: 640
     @SCREEN_HEIGHT: 640
     @GRID_SIZE: 64
 
     constructor: ->
-        @states = []
         @cq = cq(Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT).appendTo('body')
+        @states = []
+        @currentState = null
         @assetManager = new AssetManager()
 
         @assetManager.loadImage('tiles.png')
@@ -219,20 +165,47 @@ class Game
         @assetManager.loadImage('acorn-eyes.png')
         @assetManager.loadImage('fire.png')
         @assetManager.loadImage('dog.png')
+        @assetManager.loadImage('title-screen.png')
+        @assetManager.loadImage('game-over-screen.png')
         @assetManager.loadTilemap('level1.json')
         @assetManager.loadTilemap('level2.json')
         @assetManager.loadTilemap('level3.json')
         @assetManager.loadTilemap('testlevel.json')
 
         @assetManager.start =>
-            @states.push(new OverworldState(@cq, @assetManager))
-            @states[0].start()
+            @pushState(TitleScreenState)
 
-    pushState: (state) ->
+            @cq.framework
+                onstep: (delta, time) =>
+                    if @currentState
+                        @currentState.step(delta, time)
+
+                onrender: (delta, time) =>
+                    if @currentState
+                        @currentState.render(delta, time)
+                    
+                onkeydown: (key) =>
+                    if @currentState
+                        @currentState.keyDown(key)
+
+                onkeyup: (key) =>
+                    if @currentState
+                        @currentState.keyUp(key)
+
+    pushState: (stateClass, args) ->
+        state = new stateClass(@cq, @assetManager, args)
         @states.push(state)
+        @currentState = state
+        state.start(args)
 
-    popState: ->
-        @states.pop()
+    popState: (args) ->
+        if @states.length > 1
+            @states.pop()
+            prevState = @states[@states.length-1]
+            @currentState = prevState
+            prevState.start(args)
+        else
+            throw "Can't pop last state!"
 
 
 window.game = new Game()
