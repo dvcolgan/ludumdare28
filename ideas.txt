@@ -24,16 +24,15 @@ you can use one of several powerups once per level
 
 
 todo:
-    activate powerup
-
-
-    make trees and stumps sad when they catch on fire and make them look charcoaled
-
     make an intruction screen
 
-    make the player invincible for a few seconds on spawn
 
-    juice for getting more acorns
+
+
+    -make trees and stumps sad when they catch on fire and make them look charcoaled
+
+
+
 
 
     -if you hold a key while dying you don't go back to the middle
@@ -44,6 +43,7 @@ todo:
     -add bgm
 
 
+    -activate powerup
 
 
     -add transitions
@@ -88,3 +88,5 @@ later:
     different ai for the other dog
     dogs spread random fire
     disallow fires from going outside the map
+    juice for getting more acorns
+    make the player invincible for a few seconds on spawn

@@ -52,18 +52,68 @@ GridMovementSystem = (function(_super) {
           gridPosition.justEntered = false;
         }
         dx = dy = 0;
-        if (input.left) {
-          dx -= 1;
+        if (input.left === 'held') {
+          if (input.up === 'hit' || input.down === 'hit') {
+            if (input.up) {
+              dy -= 1;
+            }
+            if (input.down) {
+              dy += 1;
+            }
+          } else {
+            dx -= 1;
+          }
         }
-        if (input.right) {
-          dx += 1;
+        if (input.right === 'held') {
+          if (input.up === 'hit' || input.down === 'hit') {
+            if (input.up) {
+              dy -= 1;
+            }
+            if (input.down) {
+              dy += 1;
+            }
+          } else {
+            dx += 1;
+          }
         }
-        if (dx === 0) {
-          if (input.up) {
+        if (input.up === 'held') {
+          if (input.left === 'hit' || input.right === 'hit') {
+            if (input.left) {
+              dx -= 1;
+            }
+            if (input.right) {
+              dx += 1;
+            }
+          } else {
             dy -= 1;
           }
-          if (input.down) {
+        }
+        if (input.down === 'held') {
+          if (input.left === 'hit' || input.right === 'hit') {
+            if (input.left) {
+              dx -= 1;
+            }
+            if (input.right) {
+              dx += 1;
+            }
+          } else {
             dy += 1;
+          }
+        }
+        if (dx === 0 && dy === 0) {
+          if (input.left) {
+            dx -= 1;
+          }
+          if (input.right) {
+            dx += 1;
+          }
+          if (dx === 0) {
+            if (input.up) {
+              dy -= 1;
+            }
+            if (input.down) {
+              dy += 1;
+            }
           }
         }
         if (dx !== 0 || dy !== 0) {
@@ -979,7 +1029,6 @@ PowerupSystem = (function(_super) {
   PowerupSystem.prototype.update = function(delta) {
     var movement, player, powerup, __, _ref18;
     _ref18 = this.entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PowerupComponent', 'GridMovementComponent']), player = _ref18[0], __ = _ref18[1], powerup = _ref18[2], movement = _ref18[3];
-    console.log(powerup.active);
     if (powerup.active) {
       movement.speed = 0.6;
       powerup.remaining -= delta;
@@ -1076,11 +1125,13 @@ EnemyDamageSystem = (function(_super) {
               }
             }
           }
+          window.soundManager.stopAll();
           game.pushState(AfterDeathRestartGameTransitionState, {
             prevScreen: this.cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT),
             next: 'next-life'
           });
         } else {
+          window.soundManager.stopAll();
           game.pushState(AfterDeathRestartGameTransitionState, {
             prevScreen: this.cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT),
             next: 'game-over',
@@ -1239,6 +1290,10 @@ LevelLoaderSystem = (function(_super) {
       if (level.level > 1) {
         return game.pushState(AfterLevelCompletedTransitionState, {
           prevScreen: _this.cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT)
+        });
+      } else {
+        return window.soundManager.play('title-screen-music.ogg', {
+          volume: 40
         });
       }
     });

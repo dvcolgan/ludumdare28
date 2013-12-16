@@ -23,12 +23,40 @@ class GridMovementSystem extends System
                 else
                     gridPosition.justEntered = no
 
+
                 dx = dy = 0
-                if input.left then dx -= 1
-                if input.right then dx += 1
-                if dx == 0
-                    if input.up then dy -= 1
-                    if input.down then dy += 1
+                if input.left == 'held'
+                    if input.up == 'hit' or input.down == 'hit'
+                        if input.up then dy -= 1
+                        if input.down then dy += 1
+                    else
+                        dx -= 1
+                if input.right == 'held'
+                    if input.up == 'hit' or input.down == 'hit'
+                        if input.up then dy -= 1
+                        if input.down then dy += 1
+                    else
+                        dx += 1
+                if input.up == 'held'
+                    if input.left == 'hit' or input.right == 'hit'
+                        if input.left then dx -= 1
+                        if input.right then dx += 1
+                    else
+                        dy -= 1
+                if input.down == 'held'
+                    if input.left == 'hit' or input.right == 'hit'
+                        if input.left then dx -= 1
+                        if input.right then dx += 1
+                    else
+                        dy += 1
+                        
+                if dx == 0 and dy == 0
+                    if input.left then dx -= 1
+                    if input.right then dx += 1
+                    if dx == 0
+                        if input.up then dy -= 1
+                        if input.down then dy += 1
+
                 if dx != 0 or dy != 0
                     if dx < 0 then direction.direction = 'left'
                     if dx > 0 then direction.direction = 'right'
@@ -546,7 +574,6 @@ class PowerupSystem extends System
 
     update: (delta) ->
         [player, __, powerup, movement] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PowerupComponent', 'GridMovementComponent'])
-        console.log powerup.active
         if powerup.active
             movement.speed = 0.6
             powerup.remaining -= delta
@@ -631,10 +658,12 @@ class EnemyDamageSystem extends System
 
 
 
+                    window.soundManager.stopAll()
                     game.pushState(AfterDeathRestartGameTransitionState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT), next: 'next-life' })
 
 
                 else
+                    window.soundManager.stopAll()
                     game.pushState(AfterDeathRestartGameTransitionState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT), next: 'game-over', finalScore: score.score })
                 break
 
@@ -708,6 +737,8 @@ class LevelLoaderSystem extends System
 
             if level.level > 1
                 game.pushState(AfterLevelCompletedTransitionState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT) })
+            else
+                window.soundManager.play('title-screen-music.ogg', { volume: 40 })
         
     loadLevel: (tileDataUrl, speedFactor) ->
 

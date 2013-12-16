@@ -31,6 +31,25 @@ class TitleScreenState extends GameState
 
     keyUp: (key) ->
         if key == 'space'
+            game.pushState(InstructionsScreenState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT) })
+
+class InstructionsScreenState extends GameState
+    create: (args) ->
+        background = @entityManager.createEntityWithComponents([
+            ['PixelPositionComponent', { x: 0, y: 0 }]
+            ['StaticSpriteComponent', { spriteUrl: 'instructions-screen.png' }]
+        ])
+        camera = @entityManager.createEntityWithComponents([
+            ['CameraComponent', {}]
+            ['PixelPositionComponent', { x: 0, y: 0 }]
+        ])
+        @staticSpriteRenderSystem = new StaticSpriteRenderSystem(@cq, @entityManager, @eventManager, @assetManager)
+
+    render: (delta, time) ->
+        @staticSpriteRenderSystem.draw()
+
+    keyUp: (key) ->
+        if key == 'space'
             window.soundManager.stopAll()
             game.pushState(GameStartTransitionState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT) })
 
@@ -56,13 +75,14 @@ class AfterDeathRestartGameTransitionState extends GameState
         if @args.next == 'next-life'
             window.soundManager.play('died-sadsound.wav')
         else
-            window.soundManager.play('no-oo.wav')
+            window.soundManager.play('died-sadsound.wav')
 
     step: (delta, time) ->
         if @wipe > Game.SCREEN_WIDTH / 2
             @delay -= delta
             if @delay <= 0
                 if @args.next == 'next-life'
+                    window.soundManager.play('title-screen-music.ogg', { volume: 40 })
                     game.popState()
                 else if @args.next == 'game-over'
                     game.pushState(GameOverScreenState, { finalScore: @args.finalScore })
@@ -262,6 +282,7 @@ class Game
                 @assetManager.loadImage('dog.png')
                 @assetManager.loadImage('title-screen.png')
                 @assetManager.loadImage('game-over-screen.png')
+                @assetManager.loadImage('instructions-screen.png')
                 @assetManager.loadTilemap('level1.json')
                 @assetManager.loadTilemap('level2.json')
                 @assetManager.loadTilemap('level3.json')
