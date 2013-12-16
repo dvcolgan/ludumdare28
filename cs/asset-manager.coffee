@@ -42,7 +42,7 @@ class AssetManager
             img.src = @imagesPrefix + imgUrl
             @remaining++
             img.onload = =>
-                console.log 'loaded image'
+                #console.log 'loaded image'
                 @remaining--
                 if @remaining == 0
                     callback()
@@ -69,7 +69,7 @@ class AssetManager
                 id: bgmUrl
                 url: @audiosPrefix + bgmUrl
                 onload: =>
-                    console.log 'loaded audio'
+                    #console.log 'loaded audio'
                     @remaining--
                     if @remaining == 0
                         callback()
@@ -83,7 +83,7 @@ class AssetManager
                 id: soundEffectUrl
                 url: @audiosPrefix + soundEffectUrl
                 onload: =>
-                    console.log 'loaded audio'
+                    #console.log 'loaded audio'
                     @remaining--
                     if @remaining == 0
                         callback()

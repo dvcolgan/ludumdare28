@@ -62,7 +62,6 @@ AssetManager = (function() {
       img.src = this.imagesPrefix + imgUrl;
       this.remaining++;
       img.onload = function() {
-        console.log('loaded image');
         _this.remaining--;
         if (_this.remaining === 0) {
           return callback();
@@ -81,7 +80,6 @@ AssetManager = (function() {
         id: bgmUrl,
         url: this.audiosPrefix + bgmUrl,
         onload: function() {
-          console.log('loaded audio');
           _this.remaining--;
           if (_this.remaining === 0) {
             return callback();
@@ -100,7 +98,6 @@ AssetManager = (function() {
         id: soundEffectUrl,
         url: this.audiosPrefix + soundEffectUrl,
         onload: function() {
-          console.log('loaded audio');
           _this.remaining--;
           if (_this.remaining === 0) {
             return callback();

@@ -1,7 +1,8 @@
 window.components =
     PlayerComponent: {}
 
-    EnemyComponent: {}
+    EnemyComponent:
+        type: null
 
     PixelPositionComponent:
         x: 0
@@ -147,3 +148,9 @@ window.components =
         chance: 0.01
         eventTimer: 0
         interval: 2
+
+    PowerupComponent:
+        active: no
+        remaining: 5000
+        used: no
+

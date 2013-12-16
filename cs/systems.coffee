@@ -323,7 +323,6 @@ class DialogRenderingSystem extends System
                         dialogBox.visible = true
                         dialogBox.talkee = otherEntity
                         dialogInput.enabled = yes
-                        @assetManager.assets['audiotest.ogg'].play()
                         break
         else
             [dialogBoxEntity, dialogBox, dialogBoxText, dialogInput] = @entityManager.getFirstEntityAndComponents(['DialogBoxComponent', 'DialogBoxTextComponent', 'ActionInputComponent'])
@@ -511,13 +510,16 @@ class ScoreRenderingSystem extends System
     draw: ->
         [scoreEntity, score, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent'])
 
+        [player, __, powerup] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PowerupComponent'])
+
         @cq.fillStyle('rgba(0,0,0,0.8)')
-        @cq.roundRect(-30, -30, 156, 70, 25)
-        @cq.fill()
+        #@cq.roundRect(-30, -30, 156, 70, 25)
+        @cq.fillRect(0, 0, Game.SCREEN_WIDTH, 44)
+        #@cq.fill()
 
         acornsWidth = @cq.measureText('Acorns: ' + score.score).width
-        @cq.roundRect(Game.SCREEN_WIDTH - acornsWidth - 20, -30, 300, 70, 25)
-        @cq.fill()
+        #@cq.roundRect(Game.SCREEN_WIDTH - acornsWidth - 20, -30, 300, 70, 25)
+        #@cq.fill()
 
         @cq.font('30px "Merienda One"').textAlign('left').fillStyle('white')
         @cq.fillText('Lives: ' + lives.lives, 6, 30)
@@ -527,30 +529,114 @@ class ScoreRenderingSystem extends System
         @cq.fillText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 6, 30)
         #@cq.lineWidth(3).strokeStyle('black').strokeText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 10, -4)
 
+        @cq.textAlign('center').fillStyle('white')
+        @cq.fillText('Powerup: ' + (if not powerup.used then 'Yes' else 'No'), Game.SCREEN_WIDTH / 2, 30)
+        #@cq.lineWidth(3).strokeStyle('black').strokeText('Acorns: ' + score.score, Game.SCREEN_WIDTH - 10, -4)
+
+
+class PowerupSystem extends System
+
+    activate: (key) ->
+        if key == 'space'
+            [player, __, powerup] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PowerupComponent'])
+            if not powerup.used
+                powerup.active = yes
+                powerup.remaining = 5000
+                powerup.used = yes
+
+    update: (delta) ->
+        [player, __, powerup, movement] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PowerupComponent', 'GridMovementComponent'])
+        console.log powerup.active
+        if powerup.active
+            movement.speed = 0.6
+            powerup.remaining -= delta
+            if powerup.remaining <= 0
+                powerup.active = no
+        else
+            movement.speed = 0.4
+
+    draw: ->
+        [player, __, playerPixelPosition, powerup] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent', 'PowerupComponent'])
+        if powerup.active
+            @cq.save()
+            @cq.fillStyle('rgba(255,255,255,0.7)')
+            @cq.font('200px "Merienda One"').textAlign('center')
+
+            timeLeft = Math.floor((powerup.remaining / 5000) * 5 + 1)
+            if timeLeft == 6 then timeLeft = 5
+
+            @cq.fillText(timeLeft, Game.SCREEN_WIDTH/2, Game.SCREEN_HEIGHT/2)
+            @cq.restore()
+
+
+
 
 class EnemyDamageSystem extends System
     update: (delta) ->
 
-        [player, __, playerPosition, playerPixelPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent', 'PixelPositionComponent'])
+        [player, __, playerPosition, playerPixelPosition, playerDirection, powerup] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'GridPositionComponent', 'PixelPositionComponent', 'DirectionComponent', 'PowerupComponent'])
 
-        for [enemy, __, enemyPosition] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'GridPositionComponent'])
+        for [enemyEntity, enemy, enemyPosition, enemyPixelPosition] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'GridPositionComponent', 'PixelPositionComponent'])
+            enemyPosition.justEntered = true
+            if powerup.active then continue
             if enemyPosition.col == playerPosition.col and enemyPosition.row == playerPosition.row
                 [scoreEntity, score, lives] = @entityManager.getFirstEntityAndComponents(['ScoreComponent', 'LivesComponent'])
                 lives.lives--
                 #window.soundManager.play('nom-nom-nom.wav')
-                window.soundManager.play('dog-eat.wav')
+                if enemy.type == 'fire'
+                    window.soundManager.play('fire.wav')
+                if enemy.type == 'dog'
+                    window.soundManager.play('dog-eat.wav')
                 if lives.lives > 0
                     
                     # Reset game
+                    
+                    powerup.active = no
+
+                    tweens = @entityManager.iterateEntitiesAndComponents(['TweenComponent'])
                     playerPosition.col = 9
                     playerPosition.row = 11
                     playerPixelPosition.x = 9 * Game.GRID_SIZE
                     playerPixelPosition.y = 11 * Game.GRID_SIZE
+                    playerDirection.direction = 'right'
+
+                    for [entity, tween] in tweens
+                        @entityManager.removeComponent(entity, tween)
+
+                    [__, __, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'ActionInputComponent'])
+                    playerInput.left = playerInput.right = playerInput.down = playerInput.up = off
 
                     enemyPosition.justEntered = yes
 
+                    firstDog = yes
+                    for [dogEntity, dog, dogPosition, dogPixelPosition] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent', 'GridPositionComponent', 'PixelPositionComponent'])
+                        if dog.type == 'dog'
+                            if firstDog
+                                dogPosition.col = 3
+                                dogPosition.row = 3
+                                firstDog = no
+                            else
+                                dogPosition.col = 16
+                                dogPosition.row = 16
+                            dogPixelPosition.x = dogPosition.col * Game.GRID_SIZE
+                            dogPixelPosition.y = dogPosition.row * Game.GRID_SIZE
+                            dogPosition.justEntered = yes
+                        else
+                            # actually a fire
+                            if dogPosition.col > 8 and dogPosition.col < 12 and dogPosition.row > 8 and dogPosition.row < 12
+                                @entityManager.removeEntity(dogEntity)
+
+
+
+
+
+
+                    game.pushState(AfterDeathRestartGameTransitionState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT), next: 'next-life' })
+
+
                 else
-                    game.pushState(GameOverScreenState, { finalScore: score.score })
+                    game.pushState(AfterDeathRestartGameTransitionState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT), next: 'game-over', finalScore: score.score })
+                break
 
 
 class FireSpreadingSystem extends System
@@ -592,7 +678,7 @@ class FireSpreadingSystem extends System
                     if doSpread
                         newFireEnemy = @entityManager.createEntityWithComponents([
                             ['SpreadingFireComponent', {}]
-                            ['EnemyComponent', {}]
+                            ['EnemyComponent', { type: 'fire' }]
                             ['PixelPositionComponent', { x: newCol * Game.GRID_SIZE, y: newRow * Game.GRID_SIZE }]
                             ['GridPositionComponent', { col: newCol, row: newRow, gridSize: Game.GRID_SIZE }]
                             ['CollidableComponent', {}]
@@ -608,16 +694,23 @@ class FireSpreadingSystem extends System
 
 class LevelLoaderSystem extends System
     constructor: (@cq, @entityManager, @eventManager, @assetManager) ->
-        [player, __] = @entityManager.getFirstEntityAndComponents(['PlayerComponent'])
+        [player, __, playerInput] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'ActionInputComponent'])
         @eventManager.subscribe 'next-level', player, =>
+
+            playerInput.left = playerInput.right = playerInput.down = playerInput.up = off
+
             [__, level] = @entityManager.getFirstEntityAndComponents(['CurrentLevelComponent'])
             level.level++
 
             # Cycle through the three levels
             levelIdx = ((level.level-1) % 3) + 1
-            @loadLevel('level' + levelIdx + '.json')
+            @loadLevel('level' + levelIdx + '.json', level.level)
+
+            if level.level > 1
+                game.pushState(AfterLevelCompletedTransitionState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT) })
         
     loadLevel: (tileDataUrl, speedFactor) ->
+
         # Clear out old layers
         oldEntities = []
         for [enemyEntity, __] in @entityManager.iterateEntitiesAndComponents(['EnemyComponent'])
@@ -628,6 +721,10 @@ class LevelLoaderSystem extends System
             oldEntities.push(collisionEntity)
         for entity in oldEntities
             @entityManager.removeEntity(entity)
+
+        tweens = @entityManager.iterateEntitiesAndComponents(['TweenComponent'])
+        for [entity, tween] in tweens
+            @entityManager.removeComponent(entity, tween)
 
         # Set up map
         mapData = @assetManager.assets[tileDataUrl]
@@ -646,30 +743,35 @@ class LevelLoaderSystem extends System
         ])
 
         # Position the player
-        [player, __, playerPixelPosition, playerGridPosition] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent', 'GridPositionComponent'])
+        [player, __, playerPixelPosition, playerGridPosition, playerDirection, powerup] = @entityManager.getFirstEntityAndComponents(['PlayerComponent', 'PixelPositionComponent', 'GridPositionComponent', 'DirectionComponent', 'PowerupComponent'])
+        powerup.used = no
+        powerup.active = no
         playerGridPosition.col = 9
         playerGridPosition.row = 11
         playerPixelPosition.x = 9 * Game.GRID_SIZE
         playerPixelPosition.y = 11 * Game.GRID_SIZE
+        playerDirection.direction = 'right'
 
         # Set up acorns
         for tile, idx in objects.data
             if tile == 0
                 col = (idx % objects.width)
                 row = Math.floor(idx / objects.width)
-                acorn = @entityManager.createEntityWithComponents([
-                    ['AcornComponent', {}]
-                    ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
-                    ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
-                    ['MultiStateSpriteComponent', { spriteUrl: 'acorn.png', frameWidth: 64, frameHeight: 64 }]
-                    ['EyeHavingComponent', { offsetMax: 4, targetEntity: player, eyesImageUrl: 'acorn-eyes.png' }]
-                ])
+                if (col < 6 or col > 13) or (row < 6 or row > 13)
+                    acorn = @entityManager.createEntityWithComponents([
+                        ['AcornComponent', {}]
+                        ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
+                        ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
+                        ['MultiStateSpriteComponent', { spriteUrl: 'acorn.png', frameWidth: 64, frameHeight: 64 }]
+                        ['EyeHavingComponent', { offsetMax: 4, targetEntity: player, eyesImageUrl: 'acorn-eyes.png' }]
+                    ])
+                    break
 
         #for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
         for [col, row] in [[3,16], [16,3]]
             fireEnemy = @entityManager.createEntityWithComponents([
-                ['SpreadingFireComponent', {}]
-                ['EnemyComponent', {}]
+                ['SpreadingFireComponent', { chance: speedFactor * 0.01 }]
+                ['EnemyComponent', { type: 'fire'}]
                 ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
                 ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
                 ['CollidableComponent', {}]
@@ -681,14 +783,14 @@ class LevelLoaderSystem extends System
         #[col, row] = _.sample([[3, 3], [3, 16], [16, 3], [16, 16]])
         for [col, row], i in [[3, 3], [16, 16]]
             dog = @entityManager.createEntityWithComponents([
-                ['EnemyComponent', {}]
+                ['EnemyComponent', { type: 'dog' }]
                 ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
                 ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
                 ['DirectionComponent', { direction: 'right'}]
                 ['ActionInputComponent', {}]
                 ['AstarInputComponent', {}]
                 ['ColorComponent', { color: 'red' }]
-                ['GridMovementComponent', { speed: (i+1) * 0.1 }]
+                ['GridMovementComponent', { speed: (i+1) * 0.1 + speedFactor * 0.02  }]
                 ['CollidableComponent', {}]
                 ['AnimationComponent', { currentAction: 'idle-right', spritesheetUrl: 'dog.png', frameWidth: 176, frameHeight: 176, offsetX: 56, offsetY: 56 }]
                 ['AnimationActionComponent', {name: 'idle-right', row: 0, indices: [0], frameLength: 100 }]

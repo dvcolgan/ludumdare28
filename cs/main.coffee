@@ -32,8 +32,77 @@ class TitleScreenState extends GameState
     keyUp: (key) ->
         if key == 'space'
             window.soundManager.stopAll()
+            game.pushState(GameStartTransitionState, { prevScreen: @cq.getImageData(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT) })
 
+class GameStartTransitionState extends GameState
+    create: (args) ->
+        @prevScreen = args.prevScreen
+        @wipeX = 0
+
+    step: (delta, time) ->
+        @wipeX += delta
+        if @wipeX > Game.SCREEN_WIDTH
             game.pushState(PlayState, {})
+
+    render: (delta, time) ->
+        @cq.putImageData(@prevScreen, 0, 0)
+        @cq.fillStyle('black')
+        @cq.fillRect(0, 0, @wipeX, Game.SCREEN_HEIGHT)
+
+class AfterDeathRestartGameTransitionState extends GameState
+    create: (@args) ->
+        @wipe = 0
+        @delay = 2400
+        if @args.next == 'next-life'
+            window.soundManager.play('died-sadsound.wav')
+        else
+            window.soundManager.play('no-oo.wav')
+
+    step: (delta, time) ->
+        if @wipe > Game.SCREEN_WIDTH / 2
+            @delay -= delta
+            if @delay <= 0
+                if @args.next == 'next-life'
+                    game.popState()
+                else if @args.next == 'game-over'
+                    game.pushState(GameOverScreenState, { finalScore: @args.finalScore })
+                else
+                    throw "Exception!"
+        else
+            @wipe += delta * 0.7
+
+    render: (delta, time) ->
+        @cq.putImageData(@args.prevScreen, 0, 0)
+        @cq.fillStyle('red')
+        @cq.fillRect(0, 0, Game.SCREEN_WIDTH, @wipe)
+        @cq.fillRect(0, Game.SCREEN_HEIGHT - @wipe, Game.SCREEN_WIDTH, @wipe)
+        if @wipe >= Game.SCREEN_WIDTH / 2
+            @cq.font('102px "Merienda One"').textAlign('center').fillStyle('black')
+            @cq.fillText('DEAD  :(', Game.SCREEN_WIDTH/2, Game.SCREEN_HEIGHT/2)
+
+class AfterLevelCompletedTransitionState extends GameState
+    create: (args) ->
+        @prevScreen = args.prevScreen
+        @wipe = 0
+        @delay = 1000
+        window.soundManager.play('yay.wav')
+
+    step: (delta, time) ->
+        if @wipe > Game.SCREEN_WIDTH / 2
+            @delay -= delta
+            if @delay <= 0
+                game.popState()
+        else
+            @wipe += delta * 0.7
+
+    render: (delta, time) ->
+        @cq.putImageData(@prevScreen, 0, 0)
+        @cq.fillStyle('green')
+        @cq.fillRect(0, 0, Game.SCREEN_WIDTH, @wipe)
+        @cq.fillRect(0, Game.SCREEN_HEIGHT - @wipe, Game.SCREEN_WIDTH, @wipe)
+        if @wipe >= Game.SCREEN_WIDTH / 2
+            @cq.font('102px "Merienda One"').textAlign('center').fillStyle('black')
+            @cq.fillText('WIN  :D', Game.SCREEN_WIDTH/2, Game.SCREEN_HEIGHT/2)
 
 
 
@@ -45,6 +114,7 @@ class PlayState extends GameState
         player = @entityManager.createEntityWithComponents([
             ['PlayerComponent', {}]
             ['GridPositionComponent', { col: col, row: row, gridSize: Game.GRID_SIZE }]
+            ['PowerupComponent', {}]
             ['PixelPositionComponent', { x: col * Game.GRID_SIZE, y: row * Game.GRID_SIZE }]
             ['DirectionComponent', { direction: 'right'}]
             ['ActionInputComponent', {}]
@@ -95,6 +165,8 @@ class PlayState extends GameState
         @fireSpreadingSystem = new FireSpreadingSystem(@cq, @entityManager, @eventManager, @assetManager)
         @multiStateStaticSpriteRenderSystem = new MultiStateStaticSpriteRenderSystem(@cq, @entityManager, @eventManager, @assetManager)
 
+        @powerupSystem = new PowerupSystem(@cq, @entityManager, @eventManager, @assetManager)
+
 
         @eventManager.trigger('next-level', player)
 
@@ -111,10 +183,10 @@ class PlayState extends GameState
         @animationDirectionSyncSystem.update(delta, time)
         @cameraFollowingSystem.update(delta, time)
         @enemyDamageSystem.update(delta, time)
+        @powerupSystem.update(delta, time)
 
     render: (delta, time) ->
         @cq.clear('white')
-        console.log 'here'
         @tilemapRenderingSystem.draw()
         @shapeRenderSystem.draw()
         @staticSpriteRenderSystem.draw()
@@ -122,12 +194,14 @@ class PlayState extends GameState
         @eyeFollowingSystem.draw()
         @animatedSpriteSystem.draw()
         @scoreRenderingSystem.draw()
+        @powerupSystem.draw()
 
     keyUp: (key) ->
         @inputSystem.updateKey(key, off)
 
     keyDown: (key) ->
         @inputSystem.updateKey(key, on)
+        @powerupSystem.activate(key)
 
 
 class GameOverScreenState extends GameState
@@ -145,6 +219,7 @@ class GameOverScreenState extends GameState
         @staticSpriteRenderSystem = new StaticSpriteRenderSystem(@cq, @entityManager, @eventManager, @assetManager)
 
         window.soundManager.stopAll()
+        window.soundManager.play('game-over-voice.wav')
         window.soundManager.play('game-over-music.ogg')
 
     render: (delta, time) ->
@@ -193,6 +268,11 @@ class Game
                 @assetManager.loadSoundEffect('crunch.wav')
                 @assetManager.loadSoundEffect('nom-nom-nom.wav')
                 @assetManager.loadSoundEffect('dog-eat.wav')
+                @assetManager.loadSoundEffect('fire.wav')
+                @assetManager.loadSoundEffect('died-sadsound.wav')
+                @assetManager.loadSoundEffect('yay.wav')
+                @assetManager.loadSoundEffect('game-over-voice.wav')
+                @assetManager.loadSoundEffect('powerup.wav')
                 @assetManager.loadBGM('title-screen-music.ogg')
                 @assetManager.loadBGM('game-over-music.ogg')
 

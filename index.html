@@ -13,12 +13,24 @@ canvas {
     display: block;
     margin: 0 auto;
 }
+.loading {
+    position: absolute;
+    left: 50%;
+    margin-left: -200px;
+    top: 200px;
+    font-size: 78px;
+    width: 400px;
+    color: white;
+    z-index: -1;
+}
+
 </style>
 <link href='http://fonts.googleapis.com/css?family=Merienda+One' rel='stylesheet' type='text/css'>
 </head>
 <body>
+<div class="loading">Rather Loading...</div>
 </body>
-<script src="js/lib/soundmanager/script/soundmanager2.js"></script>
+<script src="js/lib/soundmanager/script/soundmanager2-nodebug-jsmin.js"></script>
 <script src="js/lib/graph.js"></script>
 <script src="js/lib/astar.js"></script>
 <script src="js/lib/lodash.js"></script>
