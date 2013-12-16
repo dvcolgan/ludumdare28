@@ -1344,7 +1344,6 @@ LevelLoaderSystem = (function(_super) {
               }
             ]
           ]);
-          break;
         }
       }
     }

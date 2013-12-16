@@ -765,7 +765,6 @@ class LevelLoaderSystem extends System
                         ['MultiStateSpriteComponent', { spriteUrl: 'acorn.png', frameWidth: 64, frameHeight: 64 }]
                         ['EyeHavingComponent', { offsetMax: 4, targetEntity: player, eyesImageUrl: 'acorn-eyes.png' }]
                     ])
-                    break
 
         #for [col, row] in [[3, 3], [3, 16], [16, 3], [16, 16]]
         for [col, row] in [[3,16], [16,3]]
